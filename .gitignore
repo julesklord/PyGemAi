@@ -1,0 +1,39 @@
+# Entorno Virtual
+.venv/
+venv/
+ENV/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Archivos de distribución/compilación
+build/
+dist/
+*.egg-info/
+*.egg
+MANIFEST
+
+# IDE y archivos del sistema operativo
+.idea/          # Si usas PyCharm y no lo tienes en tu gitignore global
+*.iml
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Archivos de secretos y configuración local (¡MUY IMPORTANTE!)
+.gemini_api_key_encrypted
+.gemini_api_key_unencrypted
+.env
+
+# Preferencias de usuario y logs de chat (basado en tu proyecto)
+.gemini_chatbot_prefs.json
+chat_history_*.json
+
+# Otros
+*.log
+local_settings.py
+
