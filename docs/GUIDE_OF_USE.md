@@ -1,115 +1,177 @@
-# Gemini CLI Chatbot - Guía de Utilización
+# Guía de Uso: PyGemAi Chatbot CLI
 
-La presente guía tiene como objetivo proporcionar instrucciones detalladas para la instalación, configuración y operación del Chatbot Gemini mediante Interfaz de Línea de Comandos (CLI).
-
-## Índice de Contenidos
-1.  [Introducción](#1-introducción)
-2.  [Proceso de Instalación y Configuración Sistemática](#2-proceso-de-instalación-y-configuración-sistemática)
-    * [Requisitos Previos del Sistema](#requisitos-previos-del-sistema)
-    * [Adquisición del Script y Gestión de Dependencias](#adquisición-del-script-y-gestión-de-dependencias)
-    * [Configuración de la Clave de API](#configuración-de-la-clave-de-api)
-3.  [Ejecución Inicial y Procedimientos de Primer Uso](#3-ejecución-inicial-y-procedimientos-de-primer-uso)
-4.  [Selección Estratégica del Modelo de IA](#4-selección-estratégica-del-modelo-de-ia)
-5.  [Interacción Conversacional y Gestión del Historial](#5-interacción-conversacional-y-gestión-del-historial)
-6.  [Gestión de Preferencias y Consideraciones de Seguridad](#6-gestión-de-preferencias-y-consideraciones-de-seguridad)
-7.  [Diagnóstico y Solución de Problemas Comunes](#7-diagnóstico-y-solución-de-problemas-comunes)
-
----
 ## 1. Introducción
 
-El Chatbot Gemini CLI facilita la interacción con los modelos de Inteligencia Artificial de Google Gemini a través de una terminal de línea de comandos. Este sistema ofrece una gestión segura de claves de API, selección avanzada de modelos y la capacidad de preservar el historial de las conversaciones para una continuidad operativa.
+Bienvenido a PyGemAi, un chatbot de línea de comandos (CLI) que te permite interactuar con los potentes modelos de Inteligencia Artificial de Google Gemini. PyGemAi ofrece una gestión segura de tu clave API, selección avanzada de modelos y la capacidad de guardar y cargar el historial de tus conversaciones.
 
-## 2. Proceso de Instalación y Configuración Sistemática
-### Requisitos Previos del Sistema
+## 2. Requisitos Previos
+
+Antes de usar PyGemAi, asegúrate de tener lo siguiente:
+
 * **Python:** Versión 3.8 o superior.
-* **pip:** El sistema de gestión de paquetes para Python.
-* **Clave de API de Google Gemini:** Es indispensable obtener una clave de API válida a través de [Google AI Studio](https://aistudio.google.com/).
+* **Pip:** El gestor de paquetes de Python (generalmente viene con Python).
+* **Dependencias de Python:**
+    * `google-generativeai`
+    * `cryptography`
+* **Clave API de Google Gemini:** Necesitarás una clave API válida. Puedes obtenerla desde [Google AI Studio](https://aistudio.google.com/).
+* **Git:** (Opcional, si clonas el repositorio desde GitHub).
 
-### Adquisición del Script y Gestión de Dependencias
-1.  **Obtención del Script:** Descargue o clone el archivo `gemini_chatbot.py` en un directorio designado.
-2.  **Entorno Virtual (Práctica Recomendada):**
+## 3. Instalación
+
+Puedes instalar PyGemAi de la siguiente manera:
+
+### 3.1. Desde el Código Fuente (usando Git)
+
+1.  **Clona el repositorio (si está en GitHub):**
     ```bash
-    python -m venv .venv
-    # Activación en Windows: .venv\Scripts\activate | Activación en macOS/Linux: source .venv/bin/activate
+    git clone [https://github.com/TU_USUARIO_GITHUB/PyGemAi.git](https://github.com/TU_USUARIO_GITHUB/PyGemAi.git) # TODO: GITHUB USER 
+    cd PyGemAi
     ```
-3.  **Instalación de Dependencias:** Se requieren las bibliotecas `google-generativeai` y `cryptography`. Genere un archivo `requirements.txt`:
-    ```txt
-    google-generativeai
-    cryptography
-    ```
-    Proceda con la instalación mediante:
+
+2.  **Crea y activa un entorno virtual (recomendado):**
     ```bash
-    pip install -r requirements.txt
+    python3 -m venv .venv
+    # En Linux/macOS (bash/zsh):
+    source .venv/bin/activate
+    # En Linux/macOS (fish):
+    source .venv/bin/activate.fish
+    # En Windows (cmd):
+    # .venv\Scripts\activate.bat
+    # En Windows (PowerShell):
+    # .venv\Scripts\Activate.ps1
     ```
-    Alternativamente, instale directamente: `pip install google-generativeai cryptography`.
 
-### Configuración de la Clave de API
+3.  **Instala el paquete en modo editable:**
+    Esto instalará las dependencias necesarias y el comando `pygemai`.
+    ```bash
+    pip install -e .
+    ```
 
-La clave de API puede ser proporcionada al sistema mediante los siguientes métodos:
-## 1.  **Variable de Entorno (Método Preferente):** Defina la variable de entorno `GOOGLE_API_KEY`.
-    * **Linux/macOS (sesión temporal):** `export GOOGLE_API_KEY="SU_CLAVE_API"`
-    * **Windows (cmd, sesión temporal):** `set GOOGLE_API_KEY="SU_CLAVE_API"`
-    * **Windows (PowerShell, sesión temporal):** `$env:GOOGLE_API_KEY="SU_CLAVE_API"`
-    Para una configuración persistente, consúltense los manuales correspondientes del sistema operativo.
-## 2.  **Entrada Manual y Almacenamiento Local:** En ausencia de la variable de entorno o un archivo de configuración local, el script solicitará la clave directamente y ofrecerá opciones para su almacenamiento.
+## 4. Configuración Inicial (Primera Ejecución)
 
-## 3. Ejecución Inicial y Procedimientos de Primer Uso
+### 4.1. Obtención de la Clave API de Google Gemini
 
-Navegue al directorio de ubicación del script y proceda con su ejecución:
+Antes de poder chatear, PyGemAi necesita tu clave API de Google Gemini. Si no tienes una, visita [Google AI Studio](https://aistudio.google.com/) para crear una.
+
+### 4.2. Configuración de la Clave API en PyGemAi
+
+Cuando ejecutes `pygemai` por primera vez (o si no encuentra una clave API guardada), intentará obtener la clave en el siguiente orden:
+
+1.  **Variable de Entorno (Método Preferente):**
+    Puedes definir la variable de entorno `GOOGLE_API_KEY` con tu clave. PyGemAi la detectará automáticamente.
+    * Linux/macOS (sesión temporal): `export GOOGLE_API_KEY="TU_CLAVE_API"`
+    * Windows (cmd, sesión temporal): `set GOOGLE_API_KEY="TU_CLAVE_API"`
+    * Windows (PowerShell, sesión temporal): `$env:GOOGLE_API_KEY="TU_CLAVE_API"`
+    (Para configuración persistente, consulta la documentación de tu sistema operativo).
+
+2.  **Archivos Locales:** Buscará `.gemini_api_key_encrypted` o `.gemini_api_key_unencrypted`.
+
+3.  **Ingreso Manual y Almacenamiento:**
+    Si no se encuentra ninguna clave, PyGemAi te pedirá que la ingreses directamente. Luego, te ofrecerá las siguientes opciones para guardarla para futuros usos:
+
+    * **1. Encriptada (Recomendado):**
+        * Se te pedirá una contraseña (mínimo 8 caracteres).
+        * Tu clave API se guardará de forma segura en el archivo `.gemini_api_key_encrypted`.
+        * Necesitarás ingresar esta contraseña cada vez que inicies PyGemAi (tienes 3 intentos).
+    * **2. Sin Encriptar (No Recomendado):**
+        * Tu clave API se guardará en texto plano en el archivo `.gemini_api_key_unencrypted`.
+        * **Advertencia:** Esto es un riesgo de seguridad si alguien más accede a tu sistema.
+    * **3. No Guardar (o presionar Enter):**
+        * La clave API se usará solo para la sesión actual y no se guardará localmente. Deberás ingresarla cada vez.
+
+### 4.3. Gestión de Contraseñas y Archivos de Clave
+
+* **Contraseña Incorrecta (Clave Encriptada):** Si ingresas la contraseña incorrecta 3 veces para una clave encriptada, PyGemAi te preguntará si deseas eliminar el archivo `.gemini_api_key_encrypted` (ya que podría estar corrupto o la contraseña olvidada).
+* **Archivo Ilegible (Clave Sin Encriptar):** Si el archivo `.gemini_api_key_unencrypted` existe pero no se puede leer o está vacío, también se te ofrecerá la opción de eliminarlo.
+
+## 5. Ejecución del Chatbot
+
+Una vez instalado y configurada la clave API (si es necesario), puedes iniciar el chatbot desde cualquier lugar en tu terminal (siempre que el entorno virtual esté activado, si lo usaste para la instalación):
+
 ```bash
-python gemini_chatbot.py
+pygemai
 ```
 
-Durante la primera ejecución sin una configuración previa, el sistema intentará obtener la GOOGLE_API_KEY secuencialmente desde: variables de entorno, archivos locales (.gemini_api_key_encrypted, .gemini_api_key_unencrypted), y finalmente, mediante solicitud directa al usuario.
+## 6. Interacción con el Chatbot
+### 6.1. Selección del Modelo de IA
 
-Al ingresar la clave manualmente (o si fue cargada desde una variable de entorno sin un archivo local preexistente), se presentarán las siguientes opciones de almacenamiento:
+Al iniciar, PyGemAi listará los modelos de Gemini disponibles para generación de contenido, ordenados por relevancia (priorizando "latest", "pro", "flash" y versiones recientes).
 
-    Almacenamiento Encriptado (Recomendado): Se solicitará una contraseña (mínimo 8 caracteres). La clave será almacenada de forma segura en .gemini_api_key_encrypted. Dicha contraseña será requerida en sesiones subsecuentes (se permiten 3 intentos).
-    
-    Almacenamiento Sin Encriptar (No Recomendado): La clave se guardará en texto plano en .gemini_api_key_unencrypted, lo cual constituye un riesgo de seguridad.
-    
-    No Almacenar: La clave se utilizará exclusivamente durante la sesión activa.
+    Se te presentará una lista numerada de modelos.
+    Modelo por Defecto:
+        Si es la primera vez o el último modelo usado no está disponible, el primer modelo de la lista será el predeterminado.
+        Si usaste un modelo anteriormente y aún está disponible, ese será el predeterminado (indicado como [Por defecto - Último usado]).
+    Para seleccionar:
+        Ingresa el número correspondiente al modelo deseado y presiona Enter.
+        Simplemente presiona Enter para usar el modelo por defecto.
+    El modelo que selecciones se guardará como preferencia para la próxima vez en el archivo .gemini_chatbot_prefs.json.
 
-En caso de fallo del archivo encriptado (contraseña incorrecta/corrupción del archivo) tras tres intentos, o si un archivo no encriptado resulta ilegible, el sistema ofrecerá la opción de eliminar dicho archivo.
+### 6.2. Carga del Historial de Chat
 
-## 4. Selección Estratégica del Modelo de IA
+Después de seleccionar un modelo, PyGemAi te preguntará si deseas cargar el historial de chat anterior asociado con ese modelo específico.
 
-Una vez configurada la API, se presentará un listado de los modelos Gemini disponibles, ordenados por relevancia (priorizando "latest", "pro", "flash" y versiones recientes).
+    El archivo de historial se nombra chat_history_<nombre_modelo_seguro>.json.
+    Presiona <S> o <Enter> para cargar el historial.
+    Presiona <n> (y Enter) para iniciar una nueva conversación sin cargar el historial.
 
-    Modelo Predeterminado: Será el primer modelo de la lista (identificado como [Por Defecto]) o el último utilizado si aún se encuentra disponible (identificado como [Último Usado / Por Defecto]), cargado desde .gemini_chatbot_prefs.json.
-    
-    Proceso de Selección: Ingrese el numeral correspondiente al modelo deseado o presione Enter para utilizar el modelo predeterminado. El modelo seleccionado se registrará como preferencia.
+### 6.3. Chateando
 
-## 5. Interacción Conversacional y Gestión del Historial
+Una vez en la sesión de chat:
 
-    Interacción: Ingrese su consulta después de la indicación Tú: y presione Enter. La respuesta del modelo (ej. gemini-1.5-pro:) se mostrará mediante transmisión en flujo (streaming).
-    
-    Finalización de Sesión: Ingrese salir, exit, quit o utilice la combinación de teclas Ctrl+C.
-    Gestión del Historial de Conversación:
-    
-        Carga de Historial: Al iniciar una sesión, se consultará si desea cargar el historial previo asociado al modelo seleccionado desde chat_history_<nombre_modelo>.json. Responda S o presione Enter para cargar, o n para iniciar una nueva conversación.
-        
-        Guardado de Historial: Al finalizar la sesión, se ofrecerá la opción de guardar la conversación actual en el archivo correspondiente (sobrescribiendo versiones anteriores).
+    Verás un indicador Tú:. Escribe tu mensaje y presiona Enter.
+    El modelo responderá. El nombre del modelo (ej. gemini-1.5-pro-latest:) precederá su respuesta. Las respuestas se muestran en tiempo real (streaming).
 
-## 6. Gestión de Preferencias y Consideraciones de Seguridad
+### 6.4. Finalizar la Sesión y Guardar Historial
 
-    Archivo de Preferencias (.gemini_chatbot_prefs.json): Almacena el último modelo utilizado. Se genera automáticamente si no existe.
-    
-    Seguridad de la Clave de API:
-    
-        La clave de API debe ser tratada con la misma confidencialidad que una contraseña.
-        Se recomienda optar por el almacenamiento encriptado para claves locales.
-        El script intenta aplicar permisos restrictivos (0o600) a los archivos de claves en sistemas Unix.
-        El uso de variables de entorno es una práctica de seguridad robusta, particularmente en entornos de servidor.
+Para terminar la conversación:
 
-## #7. Diagnóstico y Solución de Problemas Comunes
+    Escribe salir, exit, o quit y presiona Enter.
+    También puedes presionar Ctrl+C.
 
-    "cryptography no instalada": Verifique y reinstale las dependencias.
-    
-    Errores de Clave de API: Confirme la validez y estado activo de su clave en Google AI Studio y asegúrese de no haber excedido las cuotas asignadas.
-    
-    Errores de Carga/Guardado de Archivos: Verifique los permisos de lectura/escritura en el directorio de ejecución del script.
-    
-    Modelo No Disponible: La inaccesibilidad puede deberse a restricciones regionales o de cuota. Considere utilizar un modelo alternativo.
-    
-    Respuesta Bloqueada: Si el contenido es interceptado por filtros de seguridad, el sistema lo notificará. Se sugiere reformular la consulta.
+Al salir, PyGemAi te preguntará si deseas guardar el historial de la conversación actual en el archivo correspondiente (ej. chat_history_<nombre_modelo_seguro>.json).
+
+    Presiona <S> o <Enter> para guardar (sobrescribirá el historial anterior para ese modelo).
+    Presiona <n> (y Enter) para salir sin guardar el historial de la sesión actual.
+
+## 7. Archivos Generados por PyGemAi
+
+PyGemAi puede crear los siguientes archivos en el directorio desde donde lo ejecutes (o en el directorio raíz de tu proyecto si lo instalaste):
+
+    .gemini_api_key_encrypted: Tu clave API guardada de forma encriptada (si elegiste esta opción).
+    .gemini_api_key_unencrypted: Tu clave API guardada sin encriptar (si elegiste esta opción, no recomendado).
+    .gemini_chatbot_prefs.json: Guarda el nombre del último modelo de IA que utilizaste.
+    chat_history_<nombre_modelo_seguro>.json: Archivos que almacenan el historial de tus conversaciones para cada modelo.
+
+Importante: Considera añadir estos archivos a tu .gitignore global o del proyecto si no deseas que se suban accidentalmente a repositorios públicos, especialmente los archivos de claves API. (El .gitignore proporcionado para el proyecto ya debería cubrirlos).
+
+## 8. Desinstalación (Opcional)
+
+Si instalaste PyGemAi usando pip en un entorno virtual:
+
+    Activa el entorno virtual.
+    Ejecuta:
+```bash
+    pip uninstall PyGemAi
+```
+    Puedes eliminar la carpeta del entorno virtual y el directorio del proyecto si ya no los necesitas.
+
+## 9. Solución de Problemas Comunes
+
+    ModuleNotFoundError o ImportError para cryptography o google-generativeai: Asegúrate de haber instalado las dependencias. Si usas un entorno virtual, asegúrate de que esté activado y que las dependencias se instalaron dentro de él:
+```bash
+pip install google-generativeai cryptography
+```
+
+Error al configurar la API / Error al listar modelos:
+
+    Verifica que tu clave API de Google Gemini sea correcta y esté activa.
+    Asegúrate de tener conexión a internet.
+    Si guardaste la clave encriptada, verifica que estás usando la contraseña correcta.
+
+"Comando pygemai no encontrado":
+
+    Asegúrate de haber instalado el paquete correctamente con pip install -e . (o pip install .).
+    Si usas un entorno virtual, asegúrate de que esté activado en la terminal donde intentas ejecutar el comando.
+    En algunos casos, podrías necesitar abrir una nueva terminal después de la instalación para que el sistema reconozca el nuevo comando.
+
+Prompt bloqueado por filtros de seguridad: Si tu consulta es bloqueada, PyGemAi te lo notificará. Intenta reformular tu pregunta.
