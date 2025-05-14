@@ -11,8 +11,8 @@ Antes de usar PyGemAi, asegúrate de tener lo siguiente:
 * **Python:** Versión 3.8 o superior.
 * **Pip:** El gestor de paquetes de Python (generalmente viene con Python).
 * **Dependencias de Python:**
-    * `google-generativeai`
-    * `cryptography`
+  * `google-generativeai`
+  * `cryptography`
 * **Clave API de Google Gemini:** Necesitarás una clave API válida. Puedes obtenerla desde [Google AI Studio](https://aistudio.google.com/).
 * **Git:** (Opcional, si clonas el repositorio desde GitHub).
 
@@ -22,27 +22,49 @@ Puedes instalar PyGemAi de la siguiente manera:
 
 ### 3.1. Desde el Código Fuente (usando Git)
 
-1.  **Clona el repositorio (si está en GitHub):**
+1. **Clona el repositorio (si está en GitHub):**
+
     ```bash
-    git clone [https://github.com/TU_USUARIO_GITHUB/PyGemAi.git](https://github.com/TU_USUARIO_GITHUB/PyGemAi.git) # TODO: GITHUB USER 
+    git clone https://github.com/spjulius/PyGemAi.git
+    ```
+
+    ```
     cd PyGemAi
     ```
 
-2.  **Crea y activa un entorno virtual (recomendado):**
+2. **Crea y activa un entorno virtual (recomendado):**
+
     ```bash
     python3 -m venv .venv
-    # En Linux/macOS (bash/zsh):
-    source .venv/bin/activate
-    # En Linux/macOS (fish):
-    source .venv/bin/activate.fish
-    # En Windows (cmd):
-    # .venv\Scripts\activate.bat
-    # En Windows (PowerShell):
-    # .venv\Scripts\Activate.ps1
     ```
 
-3.  **Instala el paquete en modo editable:**
+   # En Linux/macOS (bash/zsh)
+
+    ```
+    source .venv/bin/activate
+    ```
+
+   # En Linux/macOS (fish)
+
+    ```
+    source .venv/bin/activate.fish
+    ```
+
+   # En Windows (cmd)
+
+    ```
+    .venv\Scripts\activate.bat
+    ```
+
+   # En Windows (PowerShell)
+
+    ```
+    .venv\Scripts\Activate.ps1
+    ```
+
+3. **Instala el paquete en modo editable:**
     Esto instalará las dependencias necesarias y el comando `pygemai`.
+
     ```bash
     pip install -e .
     ```
@@ -57,16 +79,16 @@ Antes de poder chatear, PyGemAi necesita tu clave API de Google Gemini. Si no ti
 
 Cuando ejecutes `pygemai` por primera vez (o si no encuentra una clave API guardada), intentará obtener la clave en el siguiente orden:
 
-1.  **Variable de Entorno (Método Preferente):**
+1. **Variable de Entorno (Método Preferente):**
     Puedes definir la variable de entorno `GOOGLE_API_KEY` con tu clave. PyGemAi la detectará automáticamente.
     * Linux/macOS (sesión temporal): `export GOOGLE_API_KEY="TU_CLAVE_API"`
     * Windows (cmd, sesión temporal): `set GOOGLE_API_KEY="TU_CLAVE_API"`
     * Windows (PowerShell, sesión temporal): `$env:GOOGLE_API_KEY="TU_CLAVE_API"`
     (Para configuración persistente, consulta la documentación de tu sistema operativo).
 
-2.  **Archivos Locales:** Buscará `.gemini_api_key_encrypted` o `.gemini_api_key_unencrypted`.
+2. **Archivos Locales:** Buscará `.gemini_api_key_encrypted` o `.gemini_api_key_unencrypted`.
 
-3.  **Ingreso Manual y Almacenamiento:**
+3. **Ingreso Manual y Almacenamiento:**
     Si no se encuentra ninguna clave, PyGemAi te pedirá que la ingreses directamente. Luego, te ofrecerá las siguientes opciones para guardarla para futuros usos:
 
     * **1. Encriptada (Recomendado):**
@@ -93,13 +115,14 @@ pygemai
 ```
 
 ## 6. Interacción con el Chatbot
+
 ### 6.1. Selección del Modelo de IA
 
-Al iniciar, PyGemAi listará los modelos de Gemini disponibles para generación de contenido, ordenados por relevancia (priorizando "latest", "pro", "flash" y versiones recientes).
+Al iniciar, PyGemAi listará los modelos de Gemini disponibles para generación de contenido, ordenados por relevancia (priorizando "latest", "pro", "flash"):
 
-    Se te presentará una lista numerada de modelos.
-    Modelo por Defecto:
-        Si es la primera vez o el último modelo usado no está disponible, el primer modelo de la lista será el predeterminado.
+* Se te presentará una lista numerada de modelos.
+* **Modelo por Defecto:**
+  * Si es la primera vez o el último modelo usado no está disponible, el primer modelo de la lista será el predeterminado.
         Si usaste un modelo anteriormente y aún está disponible, ese será el predeterminado (indicado como [Por defecto - Último usado]).
     Para seleccionar:
         Ingresa el número correspondiente al modelo deseado y presiona Enter.
@@ -142,22 +165,23 @@ PyGemAi puede crear los siguientes archivos en el directorio desde donde lo ejec
     .gemini_chatbot_prefs.json: Guarda el nombre del último modelo de IA que utilizaste.
     chat_history_<nombre_modelo_seguro>.json: Archivos que almacenan el historial de tus conversaciones para cada modelo.
 
-Importante: Considera añadir estos archivos a tu .gitignore global o del proyecto si no deseas que se suban accidentalmente a repositorios públicos, especialmente los archivos de claves API. (El .gitignore proporcionado para el proyecto ya debería cubrirlos).
-
 ## 8. Desinstalación (Opcional)
 
 Si instalaste PyGemAi usando pip en un entorno virtual:
 
     Activa el entorno virtual.
     Ejecuta:
+
 ```bash
     pip uninstall PyGemAi
 ```
+
     Puedes eliminar la carpeta del entorno virtual y el directorio del proyecto si ya no los necesitas.
 
 ## 9. Solución de Problemas Comunes
 
     ModuleNotFoundError o ImportError para cryptography o google-generativeai: Asegúrate de haber instalado las dependencias. Si usas un entorno virtual, asegúrate de que esté activado y que las dependencias se instalaron dentro de él:
+
 ```bash
 pip install google-generativeai cryptography
 ```
