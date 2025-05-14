@@ -126,14 +126,11 @@ con este programa. Si no, consulte <https://www.gnu.org/licenses/>.
 
 Julio César Martínez - <julioglez@gmail.com>
 
----
-
-Desarrollado con ❤️ y Python.
+#### **Desarrollado con ❤️ y Python.**
 
 ---
-<br>
 
-## <a name="english-version"></a>English Version
+### <a name="english-version"></a>English Version
 
 # PyGemAi: CLI Chatbot for Google Gemini Models
 
