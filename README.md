@@ -9,21 +9,21 @@ PyGemAi es una aplicación de línea de comandos (CLI) que te permite interactua
 
 * **Interfaz de Chat Intuitiva:** Conversa con los modelos Gemini de forma fluida.
 * **Gestión Segura de Clave API:**
-    * Soporte para carga desde variable de entorno (`GOOGLE_API_KEY`).
-    * Opción para guardar la clave API localmente de forma encriptada con contraseña.
-    * Opción para guardar sin encriptar (no recomendado) o no guardar localmente.
-    * Manejo de intentos de contraseña y eliminación segura de archivos de clave corruptos.
+  * Soporte para carga desde variable de entorno (`GOOGLE_API_KEY`).
+  * Opción para guardar la clave API localmente de forma encriptada con contraseña.
+  * Opción para guardar sin encriptar (no recomendado) o no guardar localmente.
+  * Manejo de intentos de contraseña y eliminación segura de archivos de clave corruptos.
 * **Selección Dinámica de Modelos:**
-    * Lista y permite seleccionar entre los modelos Gemini disponibles para generación de contenido.
-    * Ordena los modelos por relevancia (priorizando "latest", "pro", "flash").
-    * Recuerda y sugiere el último modelo utilizado.
+  * Lista y permite seleccionar entre los modelos Gemini disponibles para generación de contenido.
+  * Ordena los modelos por relevancia (priorizando "latest", "pro", "flash").
+  * Recuerda y sugiere el último modelo utilizado.
 * **Historial de Conversaciones:**
-    * Opción para cargar el historial de chat previo para un modelo específico.
-    * Opción para guardar la sesión de chat actual al finalizar.
-    * Los historiales se guardan en archivos `.json` separados por modelo.
+  * Opción para cargar el historial de chat previo para un modelo específico.
+  * Opción para guardar la sesión de chat actual al finalizar.
+  * Los historiales se guardan en archivos `.json` separados por modelo.
 * **Personalización:**
-    * Guarda las preferencias del último modelo usado.
-    * Uso de colores ANSI para una mejor legibilidad en la terminal.
+  * Guarda las preferencias del último modelo usado.
+  * Uso de colores ANSI para una mejor legibilidad en la terminal.
 * **Empaquetado y Listo para Usar:** Configurado con `setup.py` y `pyproject.toml` para una fácil instalación y uso del comando `pygemai`.
 
 ## Requisitos Previos
@@ -34,28 +34,33 @@ PyGemAi es una aplicación de línea de comandos (CLI) que te permite interactua
 
 ## Instalación
 
-1.  **Clona el Repositorio:**
+1. **Clona el Repositorio:**
     (Reemplaza `TU_USUARIO_GITHUB/PyGemAi.git` con la URL real de tu repositorio)
+
     ```bash
     git clone [https://github.com/TU_USUARIO_GITHUB/PyGemAi.git](https://github.com/TU_USUARIO_GITHUB/PyGemAi.git)
     cd PyGemAi
     ```
 
-2.  **Crea y Activa un Entorno Virtual (Recomendado):**
+2. **Crea y Activa un Entorno Virtual (Recomendado):**
+
     ```bash
     python3 -m venv .venv
     ```
+
     Activación (ejemplos):
     * Linux/macOS (bash/zsh): `source .venv/bin/activate`
     * Linux/macOS (fish): `source .venv/bin/activate.fish`
     * Windows (cmd): `.venv\Scripts\activate.bat`
     * Windows (PowerShell): `.venv\Scripts\Activate.ps1`
 
-3.  **Instala PyGemAi y sus Dependencias:**
+3. **Instala PyGemAi y sus Dependencias:**
     Desde el directorio raíz del proyecto (donde está `setup.py`), ejecuta:
+
     ```bash
     pip install -e .
     ```
+
     Esto instalará el paquete `PyGemAi` en modo editable y el comando `pygemai` estará disponible mientras tu entorno virtual esté activado. Las dependencias principales son `google-generativeai` y `cryptography`.
 
 ## Configuración de la Clave API
@@ -71,16 +76,17 @@ Para más detalles sobre la configuración y gestión de la clave API, consulta 
 
 Una vez instalado y configurada la clave API:
 
-1.  **Ejecuta el Chatbot:**
+1. **Ejecuta el Chatbot:**
     Abre tu terminal (con el entorno virtual activado) y escribe:
+
     ```bash
     pygemai
     ```
 
-2.  **Selecciona un Modelo:** Sigue las instrucciones en pantalla para elegir un modelo de IA.
-3.  **Chatea:** Escribe tus mensajes y presiona Enter.
-4.  **Sal del Chat:** Escribe `salir`, `exit`, `quit`, o presiona `Ctrl+C`.
-5.  **Guarda el Historial:** Se te preguntará si deseas guardar el historial de la sesión.
+2. **Selecciona un Modelo:** Sigue las instrucciones en pantalla para elegir un modelo de IA.
+3. **Chatea:** Escribe tus mensajes y presiona Enter.
+4. **Sal del Chat:** Escribe `salir`, `exit`, `quit`, o presiona `Ctrl+C`.
+5. **Guarda el Historial:** Se te preguntará si deseas guardar el historial de la sesión.
 
 Para una explicación completa de todas las características, opciones de línea de comandos (si las hubiera en el futuro), y solución de problemas, por favor consulta la [**Guía de Uso (`GUIDE_OF_USE.md`)**](GUIDE_OF_USE.md).
 
@@ -109,12 +115,11 @@ GARANTÍA; sin siquiera la garantía implícita de COMERCIABILIDAD o IDONEIDAD
 PARA UN PROPÓSITO PARTICULAR. Consulte la Licencia Pública General GNU para más detalles.  
 
 Usted debería haber recibido una copia de la Licencia Pública General GNU junto
-con este programa. Si no, consulte https://www.gnu.org/licenses/.  
-
+con este programa. Si no, consulte <https://www.gnu.org/licenses/>.  
 
 ## Contacto
 
-Julio César Martínez - julioglez@gmail.com
+Julio César Martínez - <julioglez@gmail.com>
 
 ---
 
