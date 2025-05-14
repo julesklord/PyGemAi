@@ -1,7 +1,13 @@
 # PyGemAi: Chatbot CLI para Modelos Google Gemini
 
+[English Version](#english-version)
+
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
+[![PyPI version](https://img.shields.io/pypi/v/pygemai.svg)](https://pypi.org/project/pygemai/) <!-- Reemplaza con tu nombre de paquete si es diferente o elimina si no está en PyPI -->
+[![Build Status](https://img.shields.io/github/actions/workflow/status/TU_USUARIO_GITHUB/PyGemAi/main.yml?branch=main)](https://github.com/TU_USUARIO_GITHUB/PyGemAi/actions) <!-- Reemplaza TU_USUARIO_GITHUB/PyGemAi y main.yml con tu configuración de CI -->
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/TU_USUARIO_GITHUB/PyGemAi/issues) <!-- Reemplaza TU_USUARIO_GITHUB/PyGemAi -->
 
 PyGemAi es una aplicación de línea de comandos (CLI) que te permite interactuar de forma sencilla y eficiente con los modelos de Inteligencia Artificial de Google Gemini directamente desde tu terminal.
 
@@ -35,7 +41,6 @@ PyGemAi es una aplicación de línea de comandos (CLI) que te permite interactua
 ## Instalación
 
 1. **Clona el Repositorio:**
-    (Reemplaza `TU_USUARIO_GITHUB/PyGemAi.git` con la URL real de tu repositorio)
 
     ```bash
     git clone [https://github.com/TU_USUARIO_GITHUB/PyGemAi.git](https://github.com/TU_USUARIO_GITHUB/PyGemAi.git)
@@ -124,3 +129,139 @@ Julio César Martínez - <julioglez@gmail.com>
 ---
 
 Desarrollado con ❤️ y Python.
+
+---
+<br>
+
+## <a name="english-version"></a>English Version
+
+# PyGemAi: CLI Chatbot for Google Gemini Models
+
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
+[![PyPI version](https://img.shields.io/pypi/v/pygemai.svg)](https://pypi.org/project/pygemai/) <!-- Replace with your package name if different or remove if not on PyPI -->
+[![Build Status](https://img.shields.io/github/actions/workflow/status/YOUR_GITHUB_USERNAME/PyGemAi/main.yml?branch=main)](https://github.com/YOUR_GITHUB_USERNAME/PyGemAi/actions) <!-- Replace YOUR_GITHUB_USERNAME/PyGemAi and main.yml with your CI configuration -->
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/YOUR_GITHUB_USERNAME/PyGemAi/issues) <!-- Replace YOUR_GITHUB_USERNAME/PyGemAi -->
+
+PyGemAi is a command-line interface (CLI) application that allows you to easily and efficiently interact with Google Gemini Artificial Intelligence models directly from your terminal.
+
+## Main Features
+
+* **Intuitive Chat Interface:** Converse fluently with Gemini models.
+* **Secure API Key Management:**
+  * Support for loading from environment variable (`GOOGLE_API_KEY`).
+  * Option to save the API key locally encrypted with a password.
+  * Option to save unencrypted (not recommended) or not save locally.
+  * Password attempt handling and secure deletion of corrupted key files.
+* **Dynamic Model Selection:**
+  * Lists and allows selection from available Gemini models for content generation.
+  * Sorts models by relevance (prioritizing "latest", "pro", "flash").
+  * Remembers and suggests the last used model.
+* **Conversation History:**
+  * Option to load previous chat history for a specific model.
+  * Option to save the current chat session upon exiting.
+  * Histories are saved in separate `.json` files per model.
+* **Customization:**
+  * Saves preferences for the last used model.
+  * Use of ANSI colors for better readability in the terminal.
+* **Packaged and Ready to Use:** Configured with `setup.py` and `pyproject.toml` for easy installation and use of the `pygemai` command.
+
+## Prerequisites
+
+* Python 3.8 or higher.
+* `pip` (the Python package manager).
+* A valid Google Gemini API Key (you can get one at Google AI Studio).
+
+## Installation
+
+1. **Clone the Repository:**
+
+    ```bash
+    git clone https://github.com/YOUR_GITHUB_USERNAME/PyGemAi.git # Replace YOUR_GITHUB_USERNAME/PyGemAi with the actual URL of your repository
+    cd PyGemAi
+    ```
+
+2. **Create and Activate a Virtual Environment (Recommended):**
+
+    ```bash
+    python3 -m venv .venv
+    ```
+
+    Activation (examples):
+    * Linux/macOS (bash/zsh): `source .venv/bin/activate`
+    * Linux/macOS (fish): `source .venv/bin/activate.fish`
+    * Windows (cmd): `.venv\Scripts\activate.bat`
+    * Windows (PowerShell): `.venv\Scripts\Activate.ps1`
+
+3. **Install PyGemAi and its Dependencies:**
+    From the project's root directory (where `setup.py` is located), run:
+
+    ```bash
+    pip install -e .
+    ```
+
+    This will install the `PyGemAi` package in editable mode, and the `pygemai` command will be available as long as your virtual environment is activated. The main dependencies are `google-generativeai` and `cryptography`.
+
+## API Key Configuration
+
+When running `pygemai` for the first time, or if no API key is detected, you will be guided to configure it. You have several options:
+
+* Use the `GOOGLE_API_KEY` environment variable.
+* Enter it manually and choose to save it encrypted (recommended), unencrypted, or not save it.
+
+For more details on API key configuration and management, refer to the detailed User Guide (`GUIDE_OF_USE.md`).
+
+## Basic Usage
+
+Once installed and the API key is configured:
+
+1. **Run the Chatbot:**
+    Open your terminal (with the virtual environment activated) and type:
+
+    ```bash
+    pygemai
+    ```
+
+2. **Select a Model:** Follow the on-screen instructions to choose an AI model.
+3. **Chat:** Type your messages and press Enter.
+4. **Exit the Chat:** Type `salir`, `exit`, `quit`, or press `Ctrl+C`.
+5. **Save History:** You will be asked if you want to save the session history.
+
+For a complete explanation of all features, command-line options (if any in the future), and troubleshooting, please refer to the **User Guide (`GUIDE_OF_USE.md`)**.
+
+## Project Structure (for Developers)
+
+This project uses an `src/` structure where the main `pygemai_cli` package contains the application logic (`main.py`).
+
+## Contributions
+
+Contributions are welcome. Please open an issue to discuss important changes or report bugs. If you wish to contribute code, consider forking the repository and submitting a pull request.
+
+## License
+
+This project is licensed under the terms of the **GNU General Public License v3.0 or later**.
+See the LICENSE file for more details.
+
+Copyright (C) <Julio César Martínez> <julioglez@gmail.com>
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+## Contact
+
+Julio César Martínez - <julioglez@gmail.com>
+
+---
+
+Developed with ❤️ and Python.
