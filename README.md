@@ -130,14 +130,13 @@ Julio César Martínez - <julioglez@gmail.com>
 
 ---
 
-### <a name="english-version"></a>English Version
+#### <a name="english-version"></a>English Version
 
 # PyGemAi: CLI Chatbot for Google Gemini Models
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
 [![PyPI version](https://img.shields.io/pypi/v/pygemai.svg)](https://pypi.org/project/pygemai/) <!-- Replace with your package name if different or remove if not on PyPI -->
-[![Build Status](https://img.shields.io/github/actions/workflow/status/YOUR_GITHUB_USERNAME/PyGemAi/main.yml?branch=main)](https://github.com/YOUR_GITHUB_USERNAME/PyGemAi/actions) <!-- Replace YOUR_GITHUB_USERNAME/PyGemAi and main.yml with your CI configuration -->
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/YOUR_GITHUB_USERNAME/PyGemAi/issues) <!-- Replace YOUR_GITHUB_USERNAME/PyGemAi -->
 
