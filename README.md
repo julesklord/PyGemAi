@@ -5,9 +5,8 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
 [![PyPI version](https://img.shields.io/pypi/v/pygemai.svg)](https://pypi.org/project/pygemai/) <!-- Reemplaza con tu nombre de paquete si es diferente o elimina si no está en PyPI -->
-[![Build Status](https://img.shields.io/github/actions/workflow/status/TU_USUARIO_GITHUB/PyGemAi/main.yml?branch=main)](https://github.com/TU_USUARIO_GITHUB/PyGemAi/actions) <!-- Reemplaza TU_USUARIO_GITHUB/PyGemAi y main.yml con tu configuración de CI -->
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/TU_USUARIO_GITHUB/PyGemAi/issues) <!-- Reemplaza TU_USUARIO_GITHUB/PyGemAi -->
+[![Contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/julesklord/PyGemAi/issues)
 
 PyGemAi es una aplicación de línea de comandos (CLI) que te permite interactuar de forma sencilla y eficiente con los modelos de Inteligencia Artificial de Google Gemini directamente desde tu terminal.
 
