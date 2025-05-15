@@ -9,13 +9,13 @@ except FileNotFoundError:
 
 setuptools.setup(
     name="PyGemAi",  # Nombre del paquete como aparecerá en PyPI
-    version="0.1.0",  # Versión inicial de tu paquete, cámbiala según avances
+    version="1.1.2",  # Versión inicial de tu paquete, cámbiala según avances
     author="Julio César Martínez",
     author_email="julioglez@gmail.com",
     description="Chatbot CLI para Google Gemini con gestión de API Keys, historial y selección de modelos.",
     long_description=long_description,
     long_description_content_type="text/markdown",  # Especifica que el README es Markdown
-    url="https://github.com/TU_USUARIO_GITHUB/TU_REPOSITORIO_PYGEMAI",  # ¡CAMBIA ESTO o elimínalo!
+    url="https://github.com/julesklord/PyGemAi",
 
     # Define que el código fuente de los paquetes está en el directorio 'src/'
     package_dir={"": "src"},
@@ -34,9 +34,9 @@ setuptools.setup(
 
     # Metadatos para PyPI: clasifica tu paquete
     classifiers=[
-        "Development Status :: 3 - Alpha",  # O 4 - Beta, 5 - Production/Stable
+        "Development Status :: 4 - Beta",  # O 4 - Beta, 5 - Production/Stable
         "Intended Audience :: End Users/Desktop",
-        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)", # Confirma que esta es tu licencia
+        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
