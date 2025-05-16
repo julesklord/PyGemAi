@@ -1,14 +1,14 @@
 # PyGemAi: Chatbot CLI para Modelos Google Gemini
 
-[English Version](#english-version)
+  [English Version](#english-version)
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Python Version](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![PyPI version](https://img.shields.io/pypi/v/pygemai.svg)](https://pypi.org/project/pygemai/)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/julesklord/PyGemAi/issues)
+  [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+  [![Python Version](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+  [![PyPI version](https://img.shields.io/pypi/v/pygemai.svg)](https://pypi.org/project/pygemai/)
+  [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+  [![Contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/julesklord/PyGemAi/issues)
 
-PyGemAi es una aplicación de línea de comandos (CLI) que te permite interactuar de forma sencilla y eficiente con los modelos de Inteligencia Artificial de Google Gemini directamente desde tu terminal.
+  PyGemAi es una aplicación de línea de comandos (CLI) que te permite interactuar de forma sencilla y eficiente con los modelos de Inteligencia Artificial de Google Gemini directamente desde tu terminal.
 
 ## Características Principales
 
@@ -173,7 +173,7 @@ PyGemAi is a command-line interface (CLI) application that allows you to easily 
 1. **Clone the Repository:**
 
     ```bash
-    git clone https://github.com/YOUR_GITHUB_USERNAME/PyGemAi.git # Replace YOUR_GITHUB_USERNAME/PyGemAi with the actual URL of your repository
+    git clone https://github.com/pygemai/PyGemAi.git 
     cd PyGemAi
     ```
 
