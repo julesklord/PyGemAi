@@ -42,7 +42,7 @@
 1. **Clona el Repositorio:**
 
     ```bash
-    git clone [https://github.com/TU_USUARIO_GITHUB/PyGemAi.git](https://github.com/TU_USUARIO_GITHUB/PyGemAi.git)
+    git clone https://github.com/julesklord/PyGemAi.git
     cd PyGemAi
     ```
 
