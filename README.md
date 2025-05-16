@@ -12,13 +12,9 @@
 
 ## Screenshots v1.2
 
-<table>
-  <tr>
-    <td><img src="docs/screenshots/screenshot1.png" alt="PyGemAi Screenshot 1" width="400"/></td>
-    <td><img src="docs/screenshots/screenshot2.png" alt="PyGemAi Screenshot 2" width="400"/></td>
-    <td><img src="docs/screenshots/screenshot3.png" alt="PyGemAi Screenshot 3" width="400"/></td>
-  </tr>
-</table>
+![PyGemAi Screenshot 1](docs/screenshots/screenshot1.png)
+![PyGemAi Screenshot 2](docs/screenshots/screenshot2.png)
+![PyGemAi Screenshot 3](docs/screenshots/screenshot3.png)
 
 ## Características Principales
 
@@ -135,13 +131,15 @@ con este programa. Si no, consulte <https://www.gnu.org/licenses/>.
 
 Julio César Martínez - <julioglez@gmail.com>
 
-#### **Desarrollado con ❤️ y Python.**
+### **Desarrollado con ❤️ y Python.**
 
 ---
 
-#### <a name="english-version"></a>English Version
+#### English Version
 
-# PyGemAi: CLI Chatbot for Google Gemini Models
+[English Version](#english-version)
+
+## PyGemAi: CLI Chatbot for Google Gemini Models
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
