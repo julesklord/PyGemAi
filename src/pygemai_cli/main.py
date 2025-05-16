@@ -280,10 +280,10 @@ def display_welcome_message():
 {Colors.BOLD}{Colors.CYAN}
 PPPPPPP   YY    YY   GGGGGG   EEEEEEE  MMMMM    MMMMM      AAAAA      IIIIIIII
 PP    PP   YY  YY   GG        EE       MM MMM  MMM MM     AA   AA        II
-PP    PP    YYYY    GG   GGG  EEEEEEE  MM   MMMM   MM    AAAAAAAAA       II
-PPPPPPP      YY     GG    GG  EE       MM    MM    MM   AA       AA      II
-PP           YY      GGGGGG   EEEEEEE  MM          MM  AAA       AAA  IIIIIIII
-PP ____________________________________________________________________________        
+PP    PP    YYYY    GG   GGG  EEEEEEE  MM  MMMMMM  MM    AAAAAAAAA       II
+PPPPPPP      YY     GG    GG  EE       MM   MMMM   MM   AA       AA      II
+PP           YY      GGGGGG   EEEEEEE  MM    MM    MM  AA         AA  IIIIIIII
+PP_____________________________________________________________________________        
 {Colors.RESET}
 """
     welcome_text = f"{Colors.BOLD}{Colors.GREEN}¡Bienvenido a PyGemAi v1.2.0!{Colors.RESET}"

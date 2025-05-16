@@ -278,11 +278,12 @@ def display_welcome_message():
     """Muestra un mensaje de bienvenida chulo con arte ASCII y novedades."""
     pygemai_art = f"""
 {Colors.BOLD}{Colors.CYAN}
-PPPPPPP   YY    YY   GGGGGG   EEEEEEE  MMMMMMM    MMMMMMM      AAAAA      IIIIIIII
-PP    PP   YY  YY   GG       EE       MM  MMMM  MMMM  MM     AA   AA       II
-PP    PP    YYYY    GG   GGG EEEEEEE  MM    MMMM    MM    AAAAAAAAA       II
-PPPPPPP      YY     GG    GG EE       MM     MM     MM   AA       AA      II
-PP           YY      GGGGGG  EEEEEEE  MM            MM  AA         AA  IIIIIIII
+PPPPPPP   YY    YY   GGGGGG   EEEEEEE  MMMMM    MMMMM      AAAAA      IIIIIIII
+PP    PP   YY  YY   GG        EE       MM MMM  MMM MM     AA   AA        II
+PP    PP    YYYY    GG   GGG  EEEEEEE  MM  MMMMMM  MM    AAAAAAAAA       II
+PPPPPPP      YY     GG    GG  EE       MM   MMMM   MM   AA       AA      II
+PP           YY      GGGGGG   EEEEEEE  MM    MM    MM  AA         AA  IIIIIIII
+PP_____________________________________________________________________________        
 {Colors.RESET}
 """
     welcome_text = f"{Colors.BOLD}{Colors.GREEN}¡Bienvenido a PyGemAi v1.2.0!{Colors.RESET}"
