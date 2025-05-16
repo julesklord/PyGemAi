@@ -9,7 +9,7 @@ except FileNotFoundError:
 
 setuptools.setup(
     name="PyGemAi",  # Nombre del paquete como aparecerá en PyPI
-    version="1.1.2",  # Versión inicial de tu paquete, cámbiala según avances
+    version="1.2.0",  # ¡Nueva versión con bienvenida molona y formato!
     author="Julio César Martínez",
     author_email="julioglez@gmail.com",
     description="Chatbot CLI para Google Gemini con gestión de API Keys, historial y selección de modelos.",

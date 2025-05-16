@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "PyGemAi"  # 
-version = "1.1.2" # Debe coincidir con la versión en setup.py
+version = "1.2.0" # Debe coincidir con la versión en setup.py
 description="Chatbot CLI para Google Gemini con gestión de API Keys, historial y selección de modelos."
 readme = "README.md"
 authors = [{ name = "Julio César Martínez", email = "julioglez@gmail.com" }]
 license = { file = "LICENSE" }
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: End Users/Desktop",
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Programming Language :: Python :: 3",
