@@ -10,6 +10,16 @@
 
   PyGemAi es una aplicación de línea de comandos (CLI) que te permite interactuar de forma sencilla y eficiente con los modelos de Inteligencia Artificial de Google Gemini directamente desde tu terminal.
 
+## Screenshots v1.2
+
+<table>
+  <tr>
+    <td><img src="docs/screenshots/screenshot1.png" alt="PyGemAi Screenshot 1" width="400"/></td>
+    <td><img src="docs/screenshots/screenshot2.png" alt="PyGemAi Screenshot 2" width="400"/></td>
+    <td><img src="docs/screenshots/screenshot3.png" alt="PyGemAi Screenshot 3" width="400"/></td>
+  </tr>
+</table>
+
 ## Características Principales
 
 * **Interfaz de Chat Intuitiva:** Conversa con los modelos Gemini de forma fluida.
