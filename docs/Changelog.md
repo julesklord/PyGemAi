@@ -1,6 +1,6 @@
 # Changelog - (PyGemAi) - Gemini API Call Script
 
-### This document details the modifications made to the Python script for interacting with the Gemini API
+## This document details the modifications made to the Python script for interacting with the Gemini API
 
 ## Initial Version (V1.0)
 
@@ -69,11 +69,16 @@
 * When a new key is provided, the user is given a choice to save it encrypted, unencrypted, or not at all.
 * Includes basic file handling and an option to delete a problematic unencrypted key file.
 
-This log summarizes the evolution of the script through its different iterations.
+## CLI Enhancements and Formatting (V1.2.0)
+
+* **Welcome Message**: Added an engaging welcome message with version information when the application starts.
+* **Output Formatting**: Implemented improved output formatting using ANSI escape codes for better readability and visual appeal of chat messages, model responses, and system notifications. This includes colored text for user prompts, AI responses, and status messages.
+* **API Interaction**: Minor corrections and improvements to the API interaction logic, ensuring smoother model listing and chat initialization.
+* **User Experience**: Enhanced overall user experience with clearer instructions and more polished console output.
 
 ### SPANISH - ESPAÑOL
 
-# Registro de Cambios - Script de Llamada a la API de Gemini
+## Registro de Cambios - Script de Llamada a la API de Gemini
 
 ### Este documento detalla las modificaciones realizadas en el script Python para interactuar con la API de Gemini
 
@@ -143,5 +148,12 @@ This log summarizes the evolution of the script through its different iterations
 * El script intentará cargar desde un archivo sin encriptar si no se encuentra uno encriptado o si falla la carga del mismo.
 * Cuando se proporciona una nueva clave, se le da al usuario la opción de guardarla encriptada, sin encriptar o no guardarla.
 * Incluye manejo básico de archivos y una opción para eliminar un archivo de clave sin encriptar problemático.
+
+## Mejoras CLI y Formato (V1.2.0)
+
+* **Mensaje de Bienvenida**: Se añadió un mensaje de bienvenida atractivo con información de la versión al iniciar la aplicación.
+* **Formato de Salida**: Se implementó un formato de salida mejorado utilizando códigos de escape ANSI para una mejor legibilidad y atractivo visual de los mensajes de chat, respuestas del modelo y notificaciones del sistema. Esto incluye texto coloreado para las entradas del usuario, respuestas de la IA y mensajes de estado.
+* **Interacción con API**: Correcciones menores y mejoras en la lógica de interacción con la API, asegurando un listado de modelos e inicialización del chat más fluidos.
+* **Experiencia de Usuario**: Mejorada la experiencia general del usuario con instrucciones más claras y una salida de consola más pulida.
 
 Este registro resume la evolución del script a través de las diferentes iteraciones.
