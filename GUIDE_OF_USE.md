@@ -18,14 +18,25 @@ Antes de usar PyGemAi, asegúrate de tener lo siguiente:
 
 ## 3. Instalación
 
-Puedes instalar PyGemAi de la siguiente manera:
+Puedes instalar PyGemAi de las siguientes maneras:
 
-### 3.1. Desde el Código Fuente (usando Git)
+### 3.1. Desde PyPI (Recomendado para usuarios finales)
 
-1. **Clona el repositorio (si está en GitHub):**
+La forma más sencilla de instalar PyGemAi es directamente desde PyPI. Este método es ideal si solo quieres usar la aplicación y no tienes intención de modificar el código fuente.
+
+```bash
+pip install PyGemAi
+```
+Una vez instalado, el comando `pygemai` debería estar disponible en tu terminal. Si usas un entorno virtual, asegúrate de que esté activado.
+
+### 3.2. Desde el Código Fuente (usando Git)
+
+Este método es adecuado si deseas tener la última versión de desarrollo o si planeas contribuir al proyecto.
+
+1. **Clona el repositorio:**
 
     ```bash
-    git clone https://github.com/spjulius/PyGemAi.git
+    git clone https://github.com/julesklord/PyGemAi.git
     ```
 
     ```bash
@@ -63,7 +74,7 @@ Puedes instalar PyGemAi de la siguiente manera:
     ```
 
 3. **Instala el paquete en modo editable:**
-    Esto instalará las dependencias necesarias y el comando `pygemai`.
+    Esto instalará las dependencias necesarias y el comando `pygemai` estará disponible mientras tu entorno virtual esté activado.
 
     ```bash
     pip install -e .

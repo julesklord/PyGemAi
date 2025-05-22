@@ -769,7 +769,7 @@ if __name__ == "__main__":
     run_chatbot()
 
 ##<PyGemAi.py>
-##Copyright (C) <2025> <Julio Cèsar Martìnez> <julioglez@gmail.com>
+##Copyright (C) <2024> <Julio Cèsar Martìnez> <julioglez@gmail.com>
 ##
 ##This program is free software: you can redistribute it and/or modify
 ##it under the terms of the GNU General Public License as published by
