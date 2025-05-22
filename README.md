@@ -45,6 +45,14 @@
 
 ## Instalación
 
+La forma más sencilla y recomendada de instalar PyGemAi es a través de PyPI:
+
+```bash
+pip install PyGemAi
+```
+
+Si prefieres instalarlo desde el código fuente o quieres contribuir al desarrollo, sigue estos pasos:
+
 1. **Clona el Repositorio:**
 
     ```bash
@@ -145,7 +153,7 @@ Julio César Martínez - <julioglez@gmail.com>
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
 [![PyPI version](https://img.shields.io/pypi/v/pygemai.svg)](https://pypi.org/project/pygemai/) <!-- Replace with your package name if different or remove if not on PyPI -->
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/YOUR_GITHUB_USERNAME/PyGemAi/issues) <!-- Replace YOUR_GITHUB_USERNAME/PyGemAi -->
+  [![Contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/julesklord/PyGemAi/issues)
 
 PyGemAi is a command-line interface (CLI) application that allows you to easily and efficiently interact with Google Gemini Artificial Intelligence models directly from your terminal.
 
@@ -178,10 +186,18 @@ PyGemAi is a command-line interface (CLI) application that allows you to easily 
 
 ## Installation
 
+The easiest and recommended way to install PyGemAi is through PyPI:
+
+```bash
+pip install PyGemAi
+```
+
+If you prefer to install from source or want to contribute to development, follow these steps:
+
 1. **Clone the Repository:**
 
     ```bash
-    git clone https://github.com/pygemai/PyGemAi.git 
+    git clone https://github.com/julesklord/PyGemAi.git
     cd PyGemAi
     ```
 

@@ -36,5 +36,5 @@ pygemai = "pygemai_cli.main:run_chatbot"
 
 [project.urls]
 Homepage = "https://github.com/julesklord/PyGemAi" # Reemplaza con tu URL
-# Documentation = "https://..."
+Documentation = "GUIDE_OF_USE.md"
 
