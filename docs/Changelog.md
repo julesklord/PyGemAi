@@ -69,6 +69,19 @@
 * When a new key is provided, the user is given a choice to save it encrypted, unencrypted, or not at all.
 * Includes basic file handling and an option to delete a problematic unencrypted key file.
 
+## Version 1.2.1 (Project Polish and Documentation Update)
+
+*   **Documentation:**
+    *   Added PyPI installation instructions to `README.md` and `GUIDE_OF_USE.md`.
+    *   Corrected GitHub repository URLs in `README.md` and `GUIDE_OF_USE.md`.
+    *   Linked `GUIDE_OF_USE.md` in `pyproject.toml` as official documentation URL.
+*   **Codebase:**
+    *   Removed duplicated `pygemai.py` script from the root directory.
+    *   Updated copyright year to 2024 in `src/pygemai_cli/main.py`.
+*   **Build & Packaging:**
+    *   Verified consistency of `setup.py` and `pyproject.toml` for release.
+    *   Skipped detailed linting corrections due to tool limitations; recommended external formatters.
+
 ## CLI Enhancements and Formatting (V1.2.0)
 
 * **Welcome Message**: Added an engaging welcome message with version information when the application starts.
@@ -148,6 +161,19 @@
 * El script intentará cargar desde un archivo sin encriptar si no se encuentra uno encriptado o si falla la carga del mismo.
 * Cuando se proporciona una nueva clave, se le da al usuario la opción de guardarla encriptada, sin encriptar o no guardarla.
 * Incluye manejo básico de archivos y una opción para eliminar un archivo de clave sin encriptar problemático.
+
+## Versión 1.2.1 (Pulido del Proyecto y Actualización de Documentación)
+
+*   **Documentación:**
+    *   Añadidas instrucciones de instalación desde PyPI en `README.md` y `GUIDE_OF_USE.md`.
+    *   Corregidas URLs del repositorio de GitHub en `README.md` y `GUIDE_OF_USE.md`.
+    *   Enlazado `GUIDE_OF_USE.md` en `pyproject.toml` como URL de documentación oficial.
+*   **Base del Código:**
+    *   Eliminado script duplicado `pygemai.py` del directorio raíz.
+    *   Actualizado el año de copyright a 2024 en `src/pygemai_cli/main.py`.
+*   **Build & Empaquetado:**
+    *   Verificada la consistencia de `setup.py` y `pyproject.toml` para el release.
+    *   Omitidas correcciones detalladas de linting debido a limitaciones de herramientas; se recomendaron formateadores externos.
 
 ## Mejoras CLI y Formato (V1.2.0)
 
