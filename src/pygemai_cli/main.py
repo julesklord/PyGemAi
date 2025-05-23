@@ -1,14 +1,14 @@
-import os # El buen amigo para interactuar con el sistema operativo
-import re # Expresiones regulares, ¡el martillo para clavar clavos y a veces tornillos!
-import sys # Para salir con estilo si las cosas se ponen feas
-import time # Porque a veces hay que darle un respiro al programa (o al usuario)
-import getpass # Para que las contraseñas no anden de mironas en la pantalla
-import json  # Nuestro traductor universal para historiales y preferencias
+import os
+import re
+import sys
+import time
+import getpass
+import json
 
-import google.generativeai as genai # La estrella del show, el SDK de Google Gemini
-from google.generativeai.types import HarmCategory, HarmBlockThreshold # Para no ofender a la IA (ni que ella nos ofenda)
+import google.generativeai as genai
+from google.generativeai.types import HarmCategory, HarmBlockThreshold
 
-# --- Dependencias para encriptación ---
+
 try:
     from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
     from cryptography.hazmat.primitives import hashes
@@ -16,768 +16,1005 @@ try:
     from cryptography.fernet import Fernet, InvalidToken
     import base64
 except ImportError:
-    print(
-        "¡Houston, tenemos un problema! Falta 'cryptography'. Sin ella, tus secretos no están a salvo. Instálala con: pip install cryptography"
-    )
+    # Direct print, as theme manager isn't available yet.
+    print("\033[91m¡Houston, tenemos un problema! Falta 'cryptography'. "  # noqa: E501
+          "Sin ella, tus secretos no están a salvo. Instálala con: "
+          "pip install cryptography\033[0m")
     sys.exit(1)
 
 
-# --- Definición de colores ANSI para la terminal ---
-# ¡Que la vida (y la terminal) no sea solo en blanco y negro! Un poco de estilo con ANSI.
 class Colors:
     RESET = "\033[0m"
-    RED = "\033[91m"
-    GREEN = "\033[92m"
-    YELLOW = "\033[93m"
-    BLUE = "\033[94m"
-    MAGENTA = "\033[95m"
-    CYAN = "\033[96m"
-    WHITE = "\033[97m"
     BOLD = "\033[1m"
     UNDERLINE = "\033[4m"
+    # Base colors for themes that might want to refer to them
+    BASE_RED = "\033[91m"
+    BASE_GREEN = "\033[92m"
+    BASE_YELLOW = "\033[93m"
+    BASE_BLUE = "\033[94m"
+    BASE_MAGENTA = "\033[95m"
+    BASE_CYAN = "\033[96m"
+    BASE_CYAN = "\033[96m"
+    BASE_WHITE = "\033[97m"
 
 
 # --- Constantes ---
-# Nombres de nuestros pequeños archivos secretos. El puntito al inicio es para que se escondan un poco.
-ENCRYPTED_API_KEY_FILE = ".gemini_api_key_encrypted"  # Aquí guardamos la llave del tesoro, ¡pero con candado!
-UNENCRYPTED_API_KEY_FILE = ".gemini_api_key_unencrypted" # La llave a la vista... no es lo ideal, pero ahí está la opción.
-PREFERENCES_FILE = ".gemini_chatbot_prefs.json"  # Para recordar qué modelo te gustó más la última vez.
-SALT_SIZE = 16  # Un puñadito de sal para hacer la encriptación más sabrosa (y segura). 16 bytes, como mandan los cánones.
-ITERATIONS = 390_000  # ¡A darle vueltas! Cuantas más, mejor para despistar a los curiosos. OWASP dice que con esto vamos bien.
+ENCRYPTED_API_KEY_FILE = ".gemini_api_key_encrypted"  # noqa: E501
+UNENCRYPTED_API_KEY_FILE = ".gemini_api_key_unencrypted"  # noqa: E501
+PREFERENCES_FILE = ".gemini_chatbot_prefs.json"
+PROFILES_FILE = "pygemai_profiles.json"
+SALT_SIZE = 16
+ITERATIONS = 390_000
+
+
+# --- Color Theme Definitions ---
+PREDEFINED_THEMES = {
+    "Legacy": {
+        "colors": {
+            "prompt_user": Colors.BOLD + Colors.BASE_CYAN,
+            "prompt_model_name": Colors.BOLD + Colors.BASE_MAGENTA,
+            "response_text": "",
+            "error_message": Colors.BASE_RED,
+            "warning_message": Colors.BASE_YELLOW,
+            "info_message": Colors.BASE_GREEN,
+            "welcome_message_art": Colors.BOLD + Colors.BASE_CYAN,
+            "welcome_message_text": Colors.BOLD + Colors.BASE_GREEN,
+            "welcome_message_dev": Colors.BASE_YELLOW,
+            "welcome_message_changes_title": Colors.BOLD + Colors.BASE_MAGENTA,  # noqa: E501
+            "welcome_message_changes_item_bullet": Colors.BASE_YELLOW,
+            "welcome_message_changes_item_text": "",
+            "section_header": Colors.BOLD + Colors.BASE_BLUE,
+            "list_item_bullet": Colors.BASE_YELLOW,
+            "list_item_text": "",
+            "inline_code": Colors.BASE_MAGENTA,
+            "code_block_lang": Colors.BASE_YELLOW,
+            "code_block_content": Colors.BASE_CYAN,
+            "markdown_h1": Colors.BOLD + Colors.BASE_BLUE,
+            "markdown_h2": Colors.BOLD + Colors.BASE_CYAN,
+            "markdown_h3": Colors.BOLD + Colors.BASE_GREEN,
+            "markdown_bold": Colors.BOLD,
+            "markdown_italic_underline": Colors.UNDERLINE,
+        }
+    },
+    "DefaultDark": {
+        "colors": {
+            "prompt_user": Colors.BOLD + "\033[38;5;81m",  # Darker Cyan/Blue
+            "prompt_model_name": Colors.BOLD + "\033[38;5;208m",  # Orange
+            "response_text": "\033[38;5;229m",  # Light Grey/Almost White
+            "error_message": Colors.BOLD + "\033[38;5;196m",  # Bright Red
+            "warning_message": "\033[38;5;220m",  # Bright Yellow
+            "info_message": "\033[38;5;113m",  # Light Green/Turquoise
+            "welcome_message_art": Colors.BOLD + "\033[38;5;81m",
+            "welcome_message_text": Colors.BOLD + "\033[38;5;153m", # Light Purple
+            "welcome_message_dev": "\033[38;5;208m",
+            "welcome_message_changes_title": Colors.BOLD + "\033[38;5;190m",  # Light Pink/Purple
+            "welcome_message_changes_item_bullet": "\033[38;5;81m",
+            "welcome_message_changes_item_text": "\033[38;5;229m",
+            "section_header": Colors.BOLD + "\033[38;5;153m",
+            "list_item_bullet": "\033[38;5;81m",
+            "list_item_text": "\033[38;5;229m",
+            "inline_code": "\033[38;5;180m",  # Light Purple/Pink
+            "code_block_lang": "\033[38;5;214m",  # Light Orange
+            "code_block_content": "\033[38;5;113m",
+            "markdown_h1": Colors.BOLD + "\033[38;5;81m",
+            "markdown_h2": Colors.BOLD + "\033[38;5;117m",  # Bright Blue
+            "markdown_h3": Colors.BOLD + "\033[38;5;153m",
+            "markdown_bold": Colors.BOLD,
+            "markdown_italic_underline": Colors.UNDERLINE + "\033[38;5;220m",
+        }
+    }
+}
+
+
+class ThemeManager:
+    def __init__(self, available_themes: dict, default_theme_name: str = "Legacy"):
+        self.available_themes = available_themes
+        self.default_theme_name = default_theme_name
+        self.active_theme_name = default_theme_name
+
+        if default_theme_name not in available_themes:
+            if available_themes:
+                self.default_theme_name = list(available_themes.keys())[0]
+                self.active_theme_name = self.default_theme_name
+                print(
+                    f"{Colors.BASE_YELLOW}Advertencia: Tema por defecto '{default_theme_name}' "  # noqa: E501
+                    f"no encontrado. Usando '{self.active_theme_name}'.{Colors.RESET}"
+                )
+            else:
+                print(
+                    f"{Colors.BASE_RED}Error: No hay temas definidos. La coloración no funcionará.{Colors.RESET}"  # noqa: E501
+                )
+                self.active_theme_colors = {}
+                return
+        self.active_theme_colors = available_themes[self.active_theme_name].get("colors", {})  # noqa: E501
+
+    def set_active_theme(self, theme_name: str):
+        if theme_name in self.available_themes:
+            self.active_theme_name = theme_name
+            self.active_theme_colors = self.available_themes[theme_name].get("colors", {})  # noqa: E501
+        else:
+            print(
+                f"{Colors.BASE_YELLOW}Advertencia: Tema '{theme_name}' no encontrado. "  # noqa: E501
+                f"Usando tema por defecto '{self.default_theme_name}'.{Colors.RESET}"
+            )
+            self.active_theme_name = self.default_theme_name
+            if self.default_theme_name in self.available_themes:
+                self.active_theme_colors = self.available_themes[self.default_theme_name].get("colors", {})  # noqa: E501
+            else:
+                self.active_theme_colors = {}
+
+    def get_color(self, element_key: str) -> str:
+        return self.active_theme_colors.get(element_key, "")
+
+    def style(self, element_key: str, text: str, apply_reset: bool = True) -> str:
+        color_code = self.get_color(element_key)
+        is_bold_style = element_key == "markdown_bold" and color_code == Colors.BOLD
+        is_underline_style = element_key == "markdown_italic_underline" and Colors.UNDERLINE in color_code  # noqa: E501
+
+        if color_code:
+            if (is_bold_style or is_underline_style) and not text.strip():
+                return text
+            reset_code = Colors.RESET if apply_reset else ""
+            return f"{color_code}{text}{reset_code}"
+        else:
+            return text
+
+
+# --- Funciones de Perfiles de Chat ---
+
+
+def _parse_safety_settings(profile_settings: dict, theme_manager: ThemeManager) -> dict:
+    parsed_settings = {}
+    harm_category_map = {
+        "HARM_CATEGORY_HARASSMENT": HarmCategory.HARM_CATEGORY_HARASSMENT,
+        "HARM_CATEGORY_HATE_SPEECH": HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+        "HARM_CATEGORY_SEXUALLY_EXPLICIT": HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+        "HARM_CATEGORY_DANGEROUS_CONTENT": HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+    }
+    harm_block_threshold_map = {
+        "BLOCK_NONE": HarmBlockThreshold.BLOCK_NONE,
+        "BLOCK_ONLY_HIGH": HarmBlockThreshold.BLOCK_ONLY_HIGH,
+        "BLOCK_MEDIUM_AND_ABOVE": HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        "BLOCK_LOW_AND_ABOVE": HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+    }
+    for key, value_str in profile_settings.items():
+        category_enum = harm_category_map.get(key)
+        threshold_enum = harm_block_threshold_map.get(value_str)
+        if category_enum and threshold_enum:
+            parsed_settings[category_enum] = threshold_enum
+        else:
+            print(theme_manager.style("warning_message",
+                  f"Advertencia: Configuración de seguridad desconocida '{key}: {value_str}' en el perfil. Se omitirá."))
+    return parsed_settings
+
+
+def load_profiles(theme_manager: ThemeManager) -> list:
+    if not os.path.exists(PROFILES_FILE):
+        return []
+    try:
+        with open(PROFILES_FILE, "r", encoding="utf-8") as f:
+            profiles = json.load(f)
+            if not isinstance(profiles, list):
+                print(theme_manager.style("error_message",
+                      f"Error: El archivo de perfiles no contiene una lista. ({PROFILES_FILE})"))
+                return []
+            return profiles
+    except FileNotFoundError:
+        return []
+    except json.JSONDecodeError:
+        print(theme_manager.style("error_message",
+              f"Error: El archivo de perfiles ({PROFILES_FILE}) está corrupto o no es un JSON válido."))
+        return []
+    except Exception as e:
+        print(theme_manager.style("error_message",
+              f"Error inesperado al cargar perfiles desde {PROFILES_FILE}: {e}"))
+        return []
+
+
+def save_profiles(profiles: list, theme_manager: ThemeManager):
+    try:
+        with open(PROFILES_FILE, "w", encoding="utf-8") as f:
+            json.dump(profiles, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(theme_manager.style("error_message", f"Error al guardar perfiles en {PROFILES_FILE}: {e}"))
 
 
 # --- Funciones de Encriptación/Desencriptación ---
-# Aquí empieza la magia negra (o blanca, según se mire) para proteger esa valiosa API Key.
+
+
 def _derive_key(password: str, salt: bytes) -> bytes:
-    kdf = PBKDF2HMAC(
-        algorithm=hashes.SHA256(),
-        length=32,
-        salt=salt,
-        iterations=ITERATIONS,
-        backend=default_backend(),
-    )
-    # Convertimos la contraseña en algo que Fernet pueda digerir. Base64 para que no haya sorpresas.
+    kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=ITERATIONS, backend=default_backend())
     return base64.urlsafe_b64encode(kdf.derive(password.encode()))
 
 
-def save_encrypted_api_key(api_key: str, password: str):
-    """Toma tu API Key, una contraseña, y ¡zas! La guarda encriptadita."""
+def save_encrypted_api_key(api_key: str, password: str, theme_manager: ThemeManager):
     try:
         salt = os.urandom(SALT_SIZE)
         derived_key = _derive_key(password, salt)
         f = Fernet(derived_key)
         encrypted_api_key = f.encrypt(api_key.encode())
-
         with open(ENCRYPTED_API_KEY_FILE, "wb") as key_file:
             key_file.write(salt)
             key_file.write(encrypted_api_key)
-        print(
-            f"{Colors.GREEN}API Key encriptada y guardada en {ENCRYPTED_API_KEY_FILE}{Colors.RESET}"
-        )
-        # En sistemas Unix, ponemos el archivo en modo "solo yo puedo tocarlo".
+        print(theme_manager.style("info_message", f"API Key encriptada y guardada en {ENCRYPTED_API_KEY_FILE}"))
         if os.name != "nt":
             os.chmod(ENCRYPTED_API_KEY_FILE, 0o600)
     except Exception as e:
-        print(f"{Colors.RED}Error al guardar la API Key encriptada: {e}{Colors.RESET}")
+        print(theme_manager.style("error_message", f"Error al guardar la API Key encriptada: {e}"))
 
 
-def load_decrypted_api_key(password: str) -> str | None:
-    """Si tienes la contraseña correcta, te devuelvo tu API Key desencriptada. Si no... pues nada."""
+def load_decrypted_api_key(password: str, theme_manager: ThemeManager) -> str | None:
     if not os.path.exists(ENCRYPTED_API_KEY_FILE):
         return None
     try:
         with open(ENCRYPTED_API_KEY_FILE, "rb") as key_file:
             salt = key_file.read(SALT_SIZE)
             encrypted_api_key = key_file.read()
-
         derived_key = _derive_key(password, salt)
         f = Fernet(derived_key)
-        decrypted_api_key = f.decrypt(encrypted_api_key).decode()
-        return decrypted_api_key
-    except InvalidToken: # ¡Contraseña incorrecta! O alguien jugó con el archivo...
+        return f.decrypt(encrypted_api_key).decode()
+    except InvalidToken:
         return None
     except Exception as e:
-        print(f"{Colors.RED}Error al cargar la API Key encriptada: {e}{Colors.RESET}")
+        print(theme_manager.style("error_message", f"Error al cargar la API Key encriptada: {e}"))
         return None
 
 
-def save_unencrypted_api_key(api_key: str):
-    """Guarda la API Key tal cual, sin encriptar. Bajo tu propio riesgo, ¿eh?"""
+def save_unencrypted_api_key(api_key: str, theme_manager: ThemeManager):
     try:
         with open(UNENCRYPTED_API_KEY_FILE, "w") as key_file:
             key_file.write(api_key)
-        print(
-            f"{Colors.YELLOW}{Colors.BOLD}ADVERTENCIA:{Colors.RESET}{Colors.YELLOW} API Key guardada SIN ENCRIPTAR en {UNENCRYPTED_API_KEY_FILE}.{Colors.RESET}"
-        )
-        # Aunque no esté encriptada, al menos que no cualquiera pueda leer el archivo fácilmente.
+        warning_style_code = theme_manager.get_color("warning_message")
+        print(f"{Colors.BOLD}{warning_style_code}ADVERTENCIA:{Colors.RESET}{warning_style_code} "
+              f"API Key guardada SIN ENCRIPTAR en {UNENCRYPTED_API_KEY_FILE}.{Colors.RESET}")
         if os.name != "nt":
             os.chmod(UNENCRYPTED_API_KEY_FILE, 0o600)
     except Exception as e:
-        print(
-            f"{Colors.RED}Error al guardar la API Key sin encriptar: {e}{Colors.RESET}"
-        )
+        print(theme_manager.style("error_message", f"Error al guardar la API Key sin encriptar: {e}"))
 
 
-def load_unencrypted_api_key() -> str | None:
-    """Carga la API Key del archivo no encriptado. Más simple, pero menos seguro."""
+def load_unencrypted_api_key(theme_manager: ThemeManager) -> str | None:
     if not os.path.exists(UNENCRYPTED_API_KEY_FILE):
         return None
     try:
         with open(UNENCRYPTED_API_KEY_FILE, "r") as key_file:
             api_key = key_file.read().strip()
             if api_key:
-                print(
-                    f"{Colors.YELLOW}{Colors.BOLD}ADVERTENCIA:{Colors.RESET}{Colors.YELLOW} API Key cargada SIN ENCRIPTAR desde {UNENCRYPTED_API_KEY_FILE}.{Colors.RESET}"
-                )
+                warning_style_code = theme_manager.get_color("warning_message")
+                print(f"{Colors.BOLD}{warning_style_code}ADVERTENCIA:{Colors.RESET}{warning_style_code} "
+                      f"API Key cargada SIN ENCRIPTAR desde {UNENCRYPTED_API_KEY_FILE}.{Colors.RESET}")
                 return api_key
-            # Si el archivo existe pero está vacío, pues no hay clave.
             return None
     except Exception as e:
-        print(
-            f"{Colors.RED}Error al cargar la API Key desde el archivo sin encriptar: {e}{Colors.RESET}"
-        )
+        print(theme_manager.style("error_message",
+              f"Error al cargar la API Key desde el archivo sin encriptar: {e}"))
         return None
 
 
-# --- Funciones de Preferencias (Nuevo) ---
-# Para que el chatbot tenga un poquito de memoria y recuerde tus gustos.
-def save_preferences(prefs: dict):
-    """Guarda tus preferencias (como el último modelo usado) en un archivo JSON. Calladito, sin hacer ruido."""
+# --- Funciones de Preferencias ---
+
+
+def save_preferences(prefs: dict, theme_manager: ThemeManager):
     try:
         with open(PREFERENCES_FILE, "w", encoding="utf-8") as f:
             json.dump(prefs, f, ensure_ascii=False, indent=2)
-        # No imprimimos nada para no ser pesados. Ya se guardó y punto.
     except Exception as e:
-        print(f"{Colors.RED}Error al guardar las preferencias: {e}{Colors.RESET}")
+        print(theme_manager.style("error_message", f"Error al guardar las preferencias: {e}"))
 
 
-def load_preferences() -> dict:
-    """Carga las preferencias desde el archivo JSON. Si no hay, empezamos de cero."""
+def load_preferences(theme_manager: ThemeManager) -> dict:
     if not os.path.exists(PREFERENCES_FILE):
-        return {}  # Devuelve un diccionario vacío si no existe
+        return {}
     try:
         with open(PREFERENCES_FILE, "r", encoding="utf-8") as f:
-            prefs = json.load(f)
-        # Tampoco hacemos ruido al cargar.
-        return prefs
+            return json.load(f)
     except Exception as e:
-        print(
-            f"{Colors.RED}Error al cargar las preferencias: {e}. Usando valores por defecto.{Colors.RESET}"
-        )
+        print(theme_manager.style("error_message",
+              f"Error al cargar las preferencias: {e}. Usando valores por defecto."))
         return {}
 
 
-# --- Funciones de Historial de Chat (sin cambios en su lógica interna) ---
-# Para que no se pierdan esas conversaciones tan interesantes con la IA.
+# --- Funciones de Historial de Chat ---
+
+
 def get_chat_history_filename(model_name: str) -> str:
-    """Crea un nombre de archivo seguro para el historial, basado en el modelo. Nada de caracteres raros."""
-    safe_model_name = "".join(
-        c if c.isalnum() or c in ("-", "_") else "_" for c in model_name
-    )
+    safe_model_name = "".join(c if c.isalnum() or c in ("-", "_") else "_" for c in model_name)
     return f"chat_history_{safe_model_name}.json"
 
 
-def save_chat_history(chat_session, filename: str):
-    """Guarda la conversación actual en un archivo JSON. ¡Para la posteridad!"""
-    history_to_save = []
-    for content in chat_session.history:
-        parts_to_save = []
-        for part in content.parts:
-            if hasattr(part, "text"):
-                parts_to_save.append({"text": part.text})
-        history_to_save.append({"role": content.role, "parts": parts_to_save})
+def save_chat_history(chat_session, filename: str, theme_manager: ThemeManager):
+    history_to_save = [{'role': c.role, 'parts': [{'text': p.text} for p in c.parts if hasattr(p, "text")]}  # noqa: E501
+                       for c in chat_session.history]
     try:
         with open(filename, "w", encoding="utf-8") as f:
-            json.dump(history_to_save, f, ensure_ascii=False, indent=2) # Con indentación para que sea legible si lo abres.
-        print(f"{Colors.GREEN}Historial de chat guardado en {filename}{Colors.RESET}")
+            json.dump(history_to_save, f, ensure_ascii=False, indent=2)
+        print(theme_manager.style("info_message", f"Historial de chat guardado en {filename}"))
     except Exception as e:
-        print(f"{Colors.RED}Error al guardar el historial: {e}{Colors.RESET}")
+        print(theme_manager.style("error_message", f"Error al guardar el historial: {e}"))
 
 
-def load_chat_history(filename: str) -> list | None:
-    """Carga un historial de chat previo desde un archivo JSON."""
+def load_chat_history(filename: str, theme_manager: ThemeManager) -> list | None:
     if not os.path.exists(filename):
         return None
     try:
         with open(filename, "r", encoding="utf-8") as f:
             history = json.load(f)
-        print(f"{Colors.GREEN}Historial de chat cargado desde {filename}{Colors.RESET}")
+        print(theme_manager.style("info_message", f"Historial de chat cargado desde {filename}"))
         return history
     except Exception as e:
-        print(
-            f"{Colors.RED}Error al cargar el historial: {e}. Empezando chat nuevo.{Colors.RESET}"
-        )
+        print(theme_manager.style("error_message", f"Error al cargar el historial: {e}. Empezando chat nuevo."))  # noqa: E501
         return None
 
 
 # --- Funciones de Formateo de Salida ---
-# ¡A poner guapa la respuesta del chatbot! Que no todo es texto plano en esta vida.
-def process_standard_markdown(text: str) -> str:
-    """Aplica formato Markdown estándar (excepto bloques de código multilínea) usando códigos ANSI."""
-    # 1. Código en línea (`código`) - Usamos Magenta para diferenciarlo de bloques de código.
-    text = re.sub(r"`(.*?)`", rf"{Colors.MAGENTA}\1{Colors.RESET}", text)
 
-    # 2. Encabezados (de más específico ### a menos específico #)
-    text = re.sub(r"^### (.*)", rf"{Colors.BOLD}{Colors.GREEN}\1{Colors.RESET}", text, flags=re.MULTILINE)  # H3 Verde
-    text = re.sub(r"^## (.*)", rf"{Colors.BOLD}{Colors.CYAN}\1{Colors.RESET}", text, flags=re.MULTILINE)   # H2 Cian
-    text = re.sub(r"^# (.*)", rf"{Colors.BOLD}{Colors.BLUE}\1{Colors.RESET}", text, flags=re.MULTILINE)    # H1 Azul
 
-    # 3. Listas - Procesar antes de negritas/itálicas que podrían usar '*'
-    # Listas no ordenadas
-    text = re.sub(r"^(\s*)\* (.*)", rf"\1{Colors.YELLOW}* {Colors.RESET}\2", text, flags=re.MULTILINE)
-    text = re.sub(r"^(\s*)- (.*)", rf"\1{Colors.YELLOW}- {Colors.RESET}\2", text, flags=re.MULTILINE)
-    # Listas ordenadas
-    text = re.sub(r"^(\s*)(\d+\.) (.*)", rf"\1{Colors.YELLOW}\2 {Colors.RESET}\3", text, flags=re.MULTILINE)
+# --- Funciones de UI para Perfiles y Temas ---
 
-    # 4. Negrita (**texto**)
-    text = re.sub(r"\*\*(.*?)\*\*", rf"{Colors.BOLD}\1{Colors.RESET}", text)
+def display_profiles(profiles: list, theme_manager: ThemeManager, show_details: bool = False,  # noqa: E501
+                     current_profile_name: str | None = None):
+    """Muestra una lista numerada de perfiles."""
+    if not profiles:
+        print(theme_manager.style("warning_message", "No hay perfiles para mostrar."))
+        return
 
-    # 5. Itálica/Subrayado (*texto* o _texto_) - Usamos subrayado para la consola.
-    # Procesar después de negrita. El `?` hace que `+` y `*` sean no codiciosos.
-    text = re.sub(r"\*([^*]+?)\*", rf"{Colors.UNDERLINE}\1{Colors.RESET}", text) # *itálica*
-    text = re.sub(r"_(.+?)_", rf"{Colors.UNDERLINE}\1{Colors.RESET}", text)     # _itálica_
-    
+    print(theme_manager.style("section_header", "\n--- Perfiles Disponibles ---"))
+    for i, profile in enumerate(profiles):
+        profile_name = profile.get("profile_name", f"Perfil {i + 1} (sin nombre)")
+        model_id = profile.get("model_id", "No especificado")
+
+        indicator = ""
+        if current_profile_name and profile_name == current_profile_name:
+            indicator = theme_manager.style("info_message", " (Actual)")
+
+        profile_line = f"{i + 1}. {profile_name}"
+        if show_details:
+            profile_line += f" (Modelo: {model_id})"
+
+        # Style the number and text separately
+        num_styled = theme_manager.style("list_item_bullet", f"{i + 1}.")
+        text_styled = theme_manager.style("list_item_text", f" {profile_name}{indicator}" +
+                                          (f" (Modelo: {model_id})" if show_details else ""))
+        print(num_styled + text_styled)
+
+        if show_details:
+            system_prompt = profile.get("system_prompt")
+            if system_prompt:
+                max_len = 60
+                ellipsis = "..." if len(system_prompt) > max_len else ""
+                print(theme_manager.style("list_item_text", f"    System Prompt: '{system_prompt[:max_len]}{ellipsis}'"))
+            theme_name = profile.get("color_theme_name", "Legacy")
+            print(theme_manager.style("list_item_text", f"    Tema: {theme_name}"))
+            # Safety settings could be summarized here too if needed
+
+
+def _get_predefined_safety_settings(level_name: str) -> dict | None:
+    """Devuelve un diccionario de configuraciones de seguridad predefinidas."""
+    # Estos son ejemplos, ajustar según necesidad
+    levels = {
+        "Default": None,  # Usará los defaults de genai.GenerativeModel
+        "Lenient": {
+            "HARM_CATEGORY_HARASSMENT": "BLOCK_NONE",
+            "HARM_CATEGORY_HATE_SPEECH": "BLOCK_NONE",
+            "HARM_CATEGORY_SEXUALLY_EXPLICIT": "BLOCK_ONLY_HIGH",
+            "HARM_CATEGORY_DANGEROUS_CONTENT": "BLOCK_ONLY_HIGH",  # Mantener algo de bloqueo para contenido peligroso
+        },
+        "Balanced": {  # Similar a los defaults originales de PyGemAi
+            "HARM_CATEGORY_HARASSMENT": "BLOCK_ONLY_HIGH",
+            "HARM_CATEGORY_HATE_SPEECH": "BLOCK_ONLY_HIGH",
+            "HARM_CATEGORY_SEXUALLY_EXPLICIT": "BLOCK_MEDIUM_AND_ABOVE",
+            "HARM_CATEGORY_DANGEROUS_CONTENT": "BLOCK_ONLY_HIGH",
+        },
+        "Strict": {
+            "HARM_CATEGORY_HARASSMENT": "BLOCK_MEDIUM_AND_ABOVE",
+            "HARM_CATEGORY_HATE_SPEECH": "BLOCK_MEDIUM_AND_ABOVE",
+            "HARM_CATEGORY_SEXUALLY_EXPLICIT": "BLOCK_MEDIUM_AND_ABOVE",
+            "HARM_CATEGORY_DANGEROUS_CONTENT": "BLOCK_MEDIUM_AND_ABOVE",
+        }
+    }
+    return levels.get(level_name)
+
+# --- Fin Funciones UI para Perfiles y Temas ---
+
+
+def create_profile_ui(theme_manager: ThemeManager) -> dict | None:
+    """UI para crear un nuevo perfil de chat."""
+    print(theme_manager.style("section_header", "\n--- Crear Nuevo Perfil ---"))
+
+    new_profile = {}
+
+    # 1. Nombre del Perfil
+    while True:
+        name = input(theme_manager.style("prompt_user", "Nombre del perfil: ")).strip()
+        if name:
+            # TODO: Add validation for unique profile name if profiles list is passed and checked
+            new_profile["profile_name"] = name
+            break
+        else:
+            print(theme_manager.style("error_message", "El nombre del perfil no puede estar vacío."))
+
+    # 2. Selección de Modelo
+    print(theme_manager.style("info_message", "\nSeleccionando modelo para el perfil..."))
+    # This reuses parts of the model selection logic from run_chatbot's original form
+    # It needs to be adapted or called carefully. For now, a simplified version:
+    all_models_list = []
+    available_for_generation = []
+    try:
+        all_models_list = list(genai.list_models())
+        for m in all_models_list:
+            if "generateContent" in m.supported_generation_methods:
+                available_for_generation.append(m)
+        if not available_for_generation:
+            print(theme_manager.style("error_message", "No se encontraron modelos de IA para generación de contenido."))
+            return None  # Cannot create profile without a model
+
+        # Simplified sort for UI selection
+        available_for_generation.sort(key=lambda m: m.name)
+
+        print(theme_manager.style("info_message", "Modelos disponibles:"))
+        for i, model in enumerate(available_for_generation):
+            print(theme_manager.style("list_item_bullet", f"  {i + 1}. ") +
+                  theme_manager.style("list_item_text", model.name))
+
+        while True:
+            try:
+                choice = input(theme_manager.style("prompt_user", "Selecciona un modelo por número: ")).strip()
+                model_idx = int(choice) - 1
+                if 0 <= model_idx < len(available_for_generation):
+                    new_profile["model_id"] = available_for_generation[model_idx].name
+                    print(theme_manager.style("info_message", f"Modelo seleccionado: {new_profile['model_id']}"))
+                    break
+                else:
+                    print(theme_manager.style("error_message", "Número fuera de rango."))
+            except ValueError:
+                print(theme_manager.style("error_message", "Entrada inválida. Ingresa un número."))
+    except Exception as e:
+        print(theme_manager.style("error_message", f"Error al listar modelos: {e}"))
+        return None
+
+    # 3. System Prompt (Opcional)
+    sys_prompt = input(theme_manager.style("prompt_user", "\nSystem prompt (opcional, presiona Enter para omitir): ")).strip()
+    if sys_prompt:
+        new_profile["system_prompt"] = sys_prompt
+
+    # 4. Selección de Tema de Color
+    available_themes_names = list(PREDEFINED_THEMES.keys())
+    print(theme_manager.style("info_message", "\nTemas de color disponibles:"))
+    for i, theme_name_item in enumerate(available_themes_names):
+        print(theme_manager.style("list_item_bullet", f"  {i + 1}. ") +
+              theme_manager.style("list_item_text", theme_name_item))
+
+    while True:
+        try:
+            choice = input(theme_manager.style("prompt_user", "Selecciona un tema por número (Enter para 'Legacy'): ")).strip()
+            if not choice:  # Default to Legacy
+                new_profile["color_theme_name"] = "Legacy"
+                print(theme_manager.style("info_message", "Tema seleccionado: Legacy"))
+                break
+            theme_idx = int(choice) - 1
+            if 0 <= theme_idx < len(available_themes_names):
+                new_profile["color_theme_name"] = available_themes_names[theme_idx]
+                print(theme_manager.style("info_message", f"Tema seleccionado: {new_profile['color_theme_name']}"))
+                break
+            else:
+                print(theme_manager.style("error_message", "Número fuera de rango."))
+        except ValueError:
+            print(theme_manager.style("error_message", "Entrada inválida. Ingresa un número."))
+
+    # 5. Selección de Nivel de Seguridad
+    safety_levels = ["Default", "Lenient", "Balanced", "Strict"]
+    print(theme_manager.style("info_message", "\nNiveles de seguridad predefinidos:"))
+    for i, level_name in enumerate(safety_levels):
+        print(theme_manager.style("list_item_bullet", f"  {i + 1}. ") +
+              theme_manager.style("list_item_text", level_name))
+
+    while True:
+        try:
+            choice = input(theme_manager.style("prompt_user", "Selecciona un nivel de seguridad (Enter para 'Default'): ")).strip()
+            if not choice:  # Default to "Default"
+                new_profile["safety_settings"] = _get_predefined_safety_settings("Default")  # Which is None
+                print(theme_manager.style("info_message", "Nivel de seguridad: Default"))
+                break
+            level_idx = int(choice) - 1
+            if 0 <= level_idx < len(safety_levels):
+                selected_level_name = safety_levels[level_idx]
+                new_profile["safety_settings"] = _get_predefined_safety_settings(selected_level_name)
+                print(theme_manager.style("info_message", f"Nivel de seguridad seleccionado: {selected_level_name}"))
+                break
+            else:
+                print(theme_manager.style("error_message", "Número fuera de rango."))
+        except ValueError:
+            print(theme_manager.style("error_message", "Entrada inválida. Ingresa un número."))
+
+    print(theme_manager.style("info_message", f"\nPerfil '{new_profile['profile_name']}' creado."))
+    return new_profile
+
+
+def delete_profile_ui(profiles: list, theme_manager: ThemeManager) -> bool:
+    """UI para eliminar un perfil existente."""
+    if not profiles:
+        print(theme_manager.style("warning_message", "No hay perfiles para eliminar."))
+        return False
+
+    print(theme_manager.style("section_header", "\n--- Eliminar Perfil ---"))
+    display_profiles(profiles, theme_manager, show_details=False)
+
+    try:
+        choice_str = input(theme_manager.style("prompt_user",
+                             "Ingresa el número del perfil a eliminar (o '0' para cancelar): ")).strip()
+        choice = int(choice_str)
+
+        if choice == 0:
+            print(theme_manager.style("info_message", "Eliminación cancelada."))
+            return False
+
+        if 1 <= choice <= len(profiles):
+            profile_to_delete = profiles[choice - 1]
+            profile_name = profile_to_delete.get("profile_name", f"Perfil {choice}")
+
+            confirm = input(theme_manager.style("warning_message",
+                              f"¿Estás seguro de que quieres eliminar el perfil '{profile_name}'? (s/N): ")).strip().lower()
+
+            if confirm == 's':
+                deleted_profile = profiles.pop(choice - 1)
+                save_profiles(profiles, theme_manager)  # Guardar la lista modificada
+                print(theme_manager.style("info_message", f"Perfil '{deleted_profile.get('profile_name')}' eliminado."))
+                return True
+            else:
+                print(theme_manager.style("info_message", "Eliminación cancelada."))
+                return False
+        else:
+            print(theme_manager.style("error_message", "Número de perfil fuera de rango."))
+            return False
+    except ValueError:
+        print(theme_manager.style("error_message", "Entrada inválida. Ingresa un número."))
+        return False
+
+
+def manage_profiles_ui(profiles: list, theme_manager: ThemeManager):
+    """UI para gestionar perfiles (listar, crear, eliminar)."""
+    while True:
+        print(theme_manager.style("section_header", "\n--- Gestión de Perfiles ---"))
+        print(theme_manager.style("list_item_bullet", "1. ") +
+              theme_manager.style("list_item_text", "Listar Perfiles (Detallado)"))
+        print(theme_manager.style("list_item_bullet", "2. ") +
+              theme_manager.style("list_item_text", "Crear Nuevo Perfil"))
+        print(theme_manager.style("list_item_bullet", "3. ") +
+              theme_manager.style("list_item_text", "Eliminar Perfil"))
+        print(theme_manager.style("list_item_bullet", "b. ") +
+              theme_manager.style("list_item_text", "Volver a selección de perfil"))
+
+        choice = input(theme_manager.style("prompt_user", "Selecciona una opción: ")).strip().lower()
+
+        if choice == '1':
+            display_profiles(profiles, theme_manager, show_details=True)
+        elif choice == '2':
+            new_profile = create_profile_ui(theme_manager)
+            if new_profile:
+                # Verificar si ya existe un perfil con el mismo nombre (case-insensitive)
+                existing_profile_index = -1
+                for i, p in enumerate(profiles):
+                    if p.get("profile_name", "").lower() == new_profile.get("profile_name", "").lower():
+                        existing_profile_index = i
+                        break
+
+                if existing_profile_index != -1:
+                    overwrite = input(theme_manager.style("warning_message",
+                                        f"Un perfil llamado '{new_profile['profile_name']}' "
+                                        "ya existe. ¿Sobrescribir? (s/N): ")).strip().lower()
+                    if overwrite == 's':
+                        profiles[existing_profile_index] = new_profile
+                        print(theme_manager.style("info_message", f"Perfil '{new_profile['profile_name']}' sobrescrito."))
+                    else:
+                        print(theme_manager.style("info_message", "Creación/actualización cancelada."))
+                        continue  # Vuelve al menú de gestión
+                else:
+                    profiles.append(new_profile)
+
+                save_profiles(profiles, theme_manager)
+        elif choice == '3':
+            delete_profile_ui(profiles, theme_manager)
+        elif choice == 'b':
+            print(theme_manager.style("info_message", "Volviendo a selección de perfil..."))
+            break
+        else:
+            print(theme_manager.style("error_message", "Opción no válida."))
+
+
+def process_standard_markdown(text: str, theme_manager: ThemeManager) -> str:
+    text = re.sub(r"`(.*?)`", lambda m: theme_manager.style("inline_code", m.group(1)), text)
+    text = re.sub(r"^### (.*)", lambda m: theme_manager.style("markdown_h3", m.group(1).strip()), text, flags=re.MULTILINE)
+    text = re.sub(r"^## (.*)", lambda m: theme_manager.style("markdown_h2", m.group(1).strip()), text, flags=re.MULTILINE)
+    text = re.sub(r"^# (.*)", lambda m: theme_manager.style("markdown_h1", m.group(1).strip()), text, flags=re.MULTILINE)
+    text = re.sub(r"^(\s*)\* (.*)", lambda m: f"{m.group(1)}{theme_manager.get_color('list_item_bullet')}* {Colors.RESET}{theme_manager.style('list_item_text', m.group(2))}", text, flags=re.MULTILINE)
+    text = re.sub(r"^(\s*)- (.*)", lambda m: f"{m.group(1)}{theme_manager.get_color('list_item_bullet')}- {Colors.RESET}{theme_manager.style('list_item_text', m.group(2))}", text, flags=re.MULTILINE)
+    text = re.sub(r"^(\s*)(\d+\.) (.*)", lambda m: f"{m.group(1)}{theme_manager.get_color('list_item_bullet')}{m.group(2)} {Colors.RESET}{theme_manager.style('list_item_text', m.group(3))}", text, flags=re.MULTILINE)
+    text = re.sub(r"\*\*(.*?)\*\*", lambda m: theme_manager.style("markdown_bold", m.group(1)), text)
+    text = re.sub(r"\*([^*]+?)\*", lambda m: theme_manager.style("markdown_italic_underline", m.group(1)), text)
+    text = re.sub(r"_(.+?)_", lambda m: theme_manager.style("markdown_italic_underline", m.group(1)), text)
     return text
 
-def format_gemini_output(text: str) -> str:
-    """Formatea la respuesta de Gemini, manejando bloques de código y Markdown estándar."""
+
+def format_gemini_output(text: str, theme_manager: ThemeManager) -> str:
     processed_parts = []
     last_end = 0
-
-    # Iterar sobre los bloques de código multilínea (``` ... ```)
     for match in re.finditer(r"```(\w*)\n?(.*?)```", text, flags=re.DOTALL):
-        # Texto antes del bloque de código actual (procesar con Markdown estándar)
         pre_match_text = text[last_end:match.start()]
-        processed_parts.append(process_standard_markdown(pre_match_text))
-
-        # Formatear el bloque de código
+        processed_parts.append(process_standard_markdown(pre_match_text, theme_manager))
         lang = match.group(1) or ""
-        code_content = match.group(2).strip('\n') # Contenido del código
-        
-        # Indentar el contenido del bloque de código para mejor legibilidad
+        code_content = match.group(2).strip('\n')
         indented_code = "\n".join([f"  {line}" for line in code_content.split('\n')])
-        
-        code_block_formatted = ""
-        if lang:
-            code_block_formatted = f"{Colors.YELLOW}```{lang}{Colors.RESET}\n{Colors.CYAN}{indented_code}{Colors.RESET}\n{Colors.YELLOW}```{Colors.RESET}"
-        else:
-            code_block_formatted = f"{Colors.YELLOW}```{Colors.RESET}\n{Colors.CYAN}{indented_code}{Colors.RESET}\n{Colors.YELLOW}```{Colors.RESET}"
+        lang_styled = theme_manager.style("code_block_lang", f"```{lang}", apply_reset=False)
+        content_styled = theme_manager.style("code_block_content", indented_code)
+        code_block_formatted = (f"{lang_styled}{Colors.RESET}\n{content_styled}\n"
+                                f"{theme_manager.style('code_block_lang', '```')}")
         processed_parts.append(code_block_formatted)
-        
         last_end = match.end()
-
-    # Texto restante después del último bloque de código (procesar con Markdown estándar)
     remaining_text = text[last_end:]
-    processed_parts.append(process_standard_markdown(remaining_text))
-    
-    return "".join(processed_parts)
+    processed_parts.append(process_standard_markdown(remaining_text, theme_manager))
+    base_response_color = theme_manager.get_color("response_text")
+    final_content = "".join(processed_parts)
+    # Only apply base color if content is not empty and not already starting with an ANSI code from markdown
+    if final_content.strip() and not final_content.startswith("\033["):
+        return base_response_color + final_content + Colors.RESET if base_response_color else final_content
+    return final_content  # Already colored or empty
 
 
 # --- ¡Aquí empieza la fiesta! La función principal del chatbot ---
-def display_welcome_message():
-    """Muestra un mensaje de bienvenida chulo con arte ASCII y novedades."""
-    pygemai_art = f"""
-{Colors.BOLD}{Colors.CYAN}
+def display_welcome_message(theme_manager: ThemeManager):
+    art_lines = f"""
 PPPPPPP   YY    YY   GGGGGG   EEEEEEE  MMMMM    MMMMM      AAAAA      IIIIIIII
 PP    PP   YY  YY   GG        EE       MM MMM  MMM MM     AA   AA        II
 PP    PP    YYYY    GG   GGG  EEEEEEE  MM  MMMMMM  MM    AAAAAAAAA       II
 PPPPPPP      YY     GG    GG  EE       MM   MMMM   MM   AA       AA      II
 PP           YY      GGGGGG   EEEEEEE  MM    MM    MM  AA         AA  IIIIIIII
-PP_____________________________________________________________________________        
-{Colors.RESET}
+PP_____________________________________________________________________________
 """
-    welcome_text = f"{Colors.BOLD}{Colors.GREEN}¡Bienvenido a PyGemAi v1.2.0!{Colors.RESET}"
-    developer_text = f"Un desarrollo de: {Colors.YELLOW}Julio César Martínez{Colors.RESET}"
-    
-    changes_title = f"\n{Colors.BOLD}{Colors.MAGENTA}--- Novedades en esta versión ---{Colors.RESET}"
-    changes_list = [
-        f"{Colors.YELLOW}* {Colors.RESET}¡Ahora las respuestas del chatbot tienen {Colors.BOLD}formato{Colors.RESET}! (negritas, listas, código, etc.)",
-        f"{Colors.YELLOW}* {Colors.RESET}Mensaje de bienvenida más {Colors.CYAN}molón{Colors.RESET} (¡lo estás viendo!).",
-        f"{Colors.YELLOW}* {Colors.RESET}Pequeñas mejoras y correcciones internas (el trabajo sucio que no se ve).",
-    ]
+    pygemai_art = theme_manager.style("welcome_message_art", art_lines.strip())
+    welcome_text_raw = "¡Bienvenido a PyGemAi v1.2.0!"
+    developer_text_raw = "Un desarrollo de: Julio César Martínez"
+
+    # Centering text after styling can be tricky due to invisible ANSI codes.
+    # A simple approach is to center the raw text and then style it.
+    centered_welcome = f"{welcome_text_raw:^80}"
+    centered_developer = f"{developer_text_raw:^80}"
 
     print(pygemai_art)
-    print(f"{welcome_text:^80}") # Centramos un poco el texto de bienvenida
-    print(f"{developer_text:^80}") # Y el del desarrollador
-    print(changes_title)
+    print(theme_manager.style("welcome_message_text", centered_welcome))
+    print(theme_manager.style("welcome_message_dev", centered_developer))
+
+    print(theme_manager.style("welcome_message_changes_title", "\n--- Novedades en esta versión ---"))
+    changes_list = [
+        f"¡Ahora las respuestas del chatbot tienen {theme_manager.style('markdown_bold', 'formato')}! "
+        "(negritas, listas, código, etc.)",
+        f"Mensaje de bienvenida más {theme_manager.style('info_message', 'molón')} (¡lo estás viendo!).",
+        "Pequeñas mejoras y correcciones internas (el trabajo sucio que no se ve).",
+    ]
     for change in changes_list:
-        print(change)
-    print(f"\n{Colors.BLUE}--------------------------------------------------------------------------------{Colors.RESET}")
-    time.sleep(1.5) # Una pequeña pausa para que se pueda leer antes de que empiece el resto.
+        bullet = theme_manager.style("welcome_message_changes_item_bullet", "* ")
+        text = theme_manager.style("welcome_message_changes_item_text", change)
+        print(bullet + text)
+
+    separator_line = "-" * 80
+    print(theme_manager.style("section_header", f"\n{separator_line}"))
+    time.sleep(1.5)
 
 
 def run_chatbot():
-    # --- Configuración de la clave de API ---
-    # Primero lo primero: necesitamos la llave mágica (API Key).
-    display_welcome_message() # ¡Aquí llamamos a nuestra nueva función de bienvenida!
-    API_KEY = None
-    key_loaded_from_file = False # Para saber si ya la cargamos de un archivo y no preguntar de nuevo si la guardamos.
-    print(
-        f"{Colors.YELLOW}Se encontró un archivo de API Key encriptado ({ENCRYPTED_API_KEY_FILE}).{Colors.RESET}"
-    )
-    password_attempts = 0
-    max_password_attempts = 3
-    while password_attempts < max_password_attempts: # Damos unos intentos para la contraseña, ¡no somos tan malos!
-        password = getpass.getpass(
-            f"{Colors.CYAN}Ingresa la contraseña para desencriptar la API Key (Enter para omitir): {Colors.RESET}"
-        ) # Esta línea se repite abajo, considerar refactorizar el bucle
-        if not password:
-            print(
-                f"{Colors.YELLOW}Omitiendo carga desde archivo encriptado.{Colors.RESET}"
-            )
-            break
-        temp_api_key = load_decrypted_api_key(password)
-        if temp_api_key:
-            API_KEY = temp_api_key
-            key_loaded_from_file = True
-            print(
-                f"{Colors.GREEN}API Key cargada y desencriptada exitosamente desde el archivo.{Colors.RESET}"
-            )
-            break
-        else:
-            password_attempts += 1
-            print(
-                f"{Colors.RED}Contraseña incorrecta o archivo corrupto.{Colors.RESET}"
-            )
-            if password_attempts >= max_password_attempts:
-                print(
-                    f"{Colors.RED}Demasiados intentos fallidos. No se pudo cargar la API Key desde el archivo encriptado.{Colors.RESET}"
-                ) # Si fallas mucho, te preguntamos si quieres borrar el archivo, por si acaso.
-                delete_choice = (
-                    input(
-                        f"{Colors.YELLOW}¿Deseas eliminar el archivo de API Key encriptado ({ENCRYPTED_API_KEY_FILE}) debido a fallos? (s/N): {Colors.RESET}"
-                    )
-                    .strip()
-                    .lower()
-                )
-                if delete_choice == "s":
-                    try:
-                        os.remove(ENCRYPTED_API_KEY_FILE)
-                        print(
-                            f"{Colors.GREEN}Archivo {ENCRYPTED_API_KEY_FILE} eliminado.{Colors.RESET}"
-                        )
-                    except Exception as e:
-                        print(
-                            f"{Colors.RED}No se pudo eliminar el archivo: {e}{Colors.RESET}"
-                        )
-                break
+    theme_manager = ThemeManager(PREDEFINED_THEMES, "Legacy")
+    profiles_data = load_profiles(theme_manager)
+    active_profile = None
+    profile_model_id = None
+    profile_safety_settings = None
+    profile_system_prompt = None
+    profile_name = "Default"  # Default profile name if none loaded
 
-    # Si no la encontramos encriptada (o el usuario omitió), buscamos la versión sin encriptar.
+    if profiles_data:
+        active_profile = profiles_data[0]
+        profile_name = active_profile.get("profile_name", "Perfil Desconocido")
+        profile_color_theme = active_profile.get("color_theme_name")
+        if profile_color_theme:
+            theme_manager.set_active_theme(profile_color_theme)
+
+    display_welcome_message(theme_manager)
+
+    if active_profile:
+        print(theme_manager.style("info_message",
+              f"Se cargaron {len(profiles_data)} perfil(es) de chat. Usando perfil: '{profile_name}'"))
+        profile_model_id = active_profile.get("model_id")
+        profile_safety_settings_data = active_profile.get("safety_settings")
+        profile_system_prompt = active_profile.get("system_prompt")
+
+        if profile_model_id:
+            print(theme_manager.style("info_message",
+                  f"Usando modelo '{profile_model_id}' del perfil activo '{profile_name}'."))
+        if profile_safety_settings_data:
+            print(theme_manager.style("info_message",
+                  f"Aplicando configuraciones de seguridad del perfil activo '{profile_name}'."))
+            profile_safety_settings = _parse_safety_settings(profile_safety_settings_data, theme_manager)
+    else:
+        print(theme_manager.style("warning_message",
+              "No se encontraron perfiles de chat. Se usarán las configuraciones por defecto/manuales."))
+
+    API_KEY = None
+    key_loaded_from_file = False
+    if os.path.exists(ENCRYPTED_API_KEY_FILE):
+        print(theme_manager.style("info_message",
+              f"Intentando cargar API Key desde archivo encriptado ({ENCRYPTED_API_KEY_FILE})."))
+        password_attempts = 0
+        max_password_attempts = 3
+        while password_attempts < max_password_attempts:
+            password = getpass.getpass(theme_manager.style("prompt_user",
+                                       "Ingresa la contraseña para desencriptar la API Key (Enter para omitir): "))
+            if not password:
+                print(theme_manager.style("warning_message", "Omitiendo carga desde archivo encriptado."))
+                break
+            temp_api_key = load_decrypted_api_key(password, theme_manager)
+            if temp_api_key:
+                API_KEY = temp_api_key
+                key_loaded_from_file = True
+                print(theme_manager.style("info_message", "API Key cargada y desencriptada exitosamente."))
+                break
+            else:
+                password_attempts += 1
+                if password_attempts < max_password_attempts:
+                    print(theme_manager.style("error_message", "Contraseña incorrecta o archivo corrupto."))
+                else:
+                    print(theme_manager.style("error_message", "Demasiados intentos fallidos."))
+                    delete_choice = input(theme_manager.style("prompt_user",
+                                          f"¿Deseas eliminar el archivo {ENCRYPTED_API_KEY_FILE}? (s/N): ")).strip().lower()
+                    if delete_choice == 's':
+                        try:
+                            os.remove(ENCRYPTED_API_KEY_FILE)
+                            print(theme_manager.style("info_message", f"Archivo {ENCRYPTED_API_KEY_FILE} eliminado."))
+                        except Exception as e:
+                            print(theme_manager.style("error_message", f"No se pudo eliminar el archivo: {e}"))
+                    break
+
     if API_KEY is None and os.path.exists(UNENCRYPTED_API_KEY_FILE):
-        print(
-            f"{Colors.YELLOW}Intentando cargar desde archivo de API Key sin encriptar ({UNENCRYPTED_API_KEY_FILE}).{Colors.RESET}"
-        )
-        temp_api_key = load_unencrypted_api_key()
+        temp_api_key = load_unencrypted_api_key(theme_manager)
         if temp_api_key:
             API_KEY = temp_api_key
             key_loaded_from_file = True
-            print(
-                f"{Colors.GREEN}API Key cargada exitosamente desde el archivo (sin encriptar).{Colors.RESET}"
-            )
-        elif os.path.exists( # Si el archivo existe pero no pudimos leer la clave (vacío, corrupto...)
-            UNENCRYPTED_API_KEY_FILE
-        ):  # Si la carga falló pero el archivo existe (ej. vacío o error de lectura)
-            delete_choice = (
-                input(
-                    f"{Colors.YELLOW}El archivo de API Key sin encriptar ({UNENCRYPTED_API_KEY_FILE}) no pudo ser leído correctamente o está vacío. ¿Deseas eliminarlo? (s/N): {Colors.RESET}"
-                )
-                .strip()
-                .lower()
-            )
-            if delete_choice == "s":
+        elif os.path.exists(UNENCRYPTED_API_KEY_FILE):
+            delete_choice = input(theme_manager.style("prompt_user",
+                                  f"El archivo {UNENCRYPTED_API_KEY_FILE} no pudo ser leído o está vacío. "
+                                  "¿Deseas eliminarlo? (s/N): ")).strip().lower()
+            if delete_choice == 's':
                 try:
                     os.remove(UNENCRYPTED_API_KEY_FILE)
-                    print(
-                        f"{Colors.GREEN}Archivo {UNENCRYPTED_API_KEY_FILE} eliminado.{Colors.RESET}"
-                    )
+                    print(theme_manager.style("info_message", f"Archivo {UNENCRYPTED_API_KEY_FILE} eliminado."))
                 except Exception as e:
-                    print(f"{Colors.RED}No se pudo eliminar el archivo: {e}{Colors.RESET}")
+                    print(theme_manager.style("error_message", f"No se pudo eliminar el archivo: {e}"))
 
-    # 3. Si sigue sin aparecer, probamos con la variable de entorno GOOGLE_API_KEY. ¡Un clásico!
     if API_KEY is None:
         API_KEY = os.getenv("GOOGLE_API_KEY")
         if API_KEY:
-            print(
-                f"{Colors.GREEN}API Key cargada desde la variable de entorno GOOGLE_API_KEY.{Colors.RESET}"
-            )
-        else: # ¡Último recurso! Pedírsela directamente al usuario.
-            # 4. Si aún no hay clave, pedir al usuario que la ingrese.
-            print(
-                f"{Colors.YELLOW}La clave de API no se encontró en archivos locales ni en la variable de entorno GOOGLE_API_KEY.{Colors.RESET}"
-            )
-            print(
-                f"{Colors.YELLOW}Puedes configurar la variable de entorno GOOGLE_API_KEY o crear un archivo '.gemini_api_key_encrypted'.{Colors.RESET}"
-            )
-            print(
-                f"{Colors.YELLOW}Alternativamente, puedes ingresarla directamente ahora:{Colors.RESET}"
-            )
-
-            API_KEY = input(
-                f"{Colors.CYAN}Por favor, ingresa tu clave de API de Gemini: {Colors.RESET}"
-            ).strip()
+            print(theme_manager.style("info_message", "API Key cargada desde la variable de entorno GOOGLE_API_KEY."))
+        else:
+            print(theme_manager.style("warning_message", "API Key no encontrada en archivos o variable de entorno."))
+            API_KEY = input(theme_manager.style("prompt_user", "Por favor, ingresa tu clave de API de Gemini: ")).strip()
             if not API_KEY:
-                print(
-                    f"{Colors.RED}Error: No se ingresó ninguna clave de API.{Colors.RESET}"
-                )
+                print(theme_manager.style("error_message", "No se ingresó clave de API. Saliendo."))
                 sys.exit(1)
 
-    # 5. Si conseguimos la API Key (y no fue de un archivo), preguntamos si quiere guardarla para la próxima.
     if API_KEY and not key_loaded_from_file:
-        print(
-            f"\n{Colors.CYAN}¿Cómo deseas guardar esta API Key para futuros usos?{Colors.RESET}"
-        )
-        print(f"  {Colors.CYAN}1. Encriptada (recomendado){Colors.RESET}")
-        print(
-            f"  {Colors.CYAN}2. Sin encriptar ({Colors.RED}NO RECOMENDADO - RIESGO DE SEGURIDAD{Colors.CYAN}){Colors.RESET}"
-        )
-        print(f"  {Colors.CYAN}3. No guardar{Colors.RESET}")
-        save_choice_input = input(
-            f"{Colors.CYAN}Elige una opción (1/2/3, Enter para no guardar): {Colors.RESET}"
-        ).strip()
-
+        print(theme_manager.style("prompt_user", "\n¿Cómo deseas guardar esta API Key para futuros usos?"))
+        print(theme_manager.style("prompt_user", "  1. Encriptada (recomendado)"))
+        no_rec_text = theme_manager.style("error_message", "NO RECOMENDADO - RIESGO DE SEGURIDAD", apply_reset=False)  # Keep prompt color
+        print(theme_manager.style("prompt_user", f"  2. Sin encriptar ({no_rec_text}{theme_manager.get_color('prompt_user')})"))
+        print(theme_manager.style("prompt_user", "  3. No guardar"))
+        save_choice_input = input(theme_manager.style("prompt_user", "Elige una opción (1/2/3, Enter para no guardar): ")).strip()
         if save_choice_input == "1":
+            # ... (rest of API key saving logic using theme_manager for prints)
             while True:
-                password = getpass.getpass(
-                    f"{Colors.CYAN}Ingresa una contraseña para encriptar la API Key (mínimo 8 caracteres, dejar en blanco para cancelar): {Colors.RESET}"
-                )
+                password = getpass.getpass(theme_manager.style("prompt_user",
+                                           "Ingresa contraseña para encriptar (mín. 8 car., Enter para cancelar): "))
                 if not password:
-                    print(f"{Colors.YELLOW}Guardado encriptado cancelado.{Colors.RESET}")
+                    print(theme_manager.style("warning_message", "Guardado cancelado."))
                     break
                 if len(password) < 8:
-                    print(
-                        f"{Colors.RED}La contraseña debe tener al menos 8 caracteres.{Colors.RESET}"
-                    )
+                    print(theme_manager.style("error_message", "Contraseña muy corta."))
                     continue
-                password_confirm = getpass.getpass(
-                    f"{Colors.CYAN}Confirma la contraseña: {Colors.RESET}"
-                )
+                password_confirm = getpass.getpass(theme_manager.style("prompt_user", "Confirma contraseña: "))
                 if password == password_confirm:
-                    save_encrypted_api_key(API_KEY, password)
+                    save_encrypted_api_key(API_KEY, password, theme_manager)
                     break
                 else:
-                    print(
-                        f"{Colors.RED}Las contraseñas no coinciden. Inténtalo de nuevo.{Colors.RESET}"
-                    )
+                    print(theme_manager.style("error_message", "Las contraseñas no coinciden."))
         elif save_choice_input == "2":
-            save_unencrypted_api_key(API_KEY)
-        elif save_choice_input == "3" or not save_choice_input:
-            print(f"{Colors.YELLOW}API Key no guardada localmente.{Colors.RESET}")
+            save_unencrypted_api_key(API_KEY, theme_manager)
         else:
-            print(
-                f"{Colors.YELLOW}Opción inválida. API Key no guardada localmente.{Colors.RESET}"
-            )
+            print(theme_manager.style("warning_message", "API Key no guardada localmente."))
 
-    # 6. ¡Momento de la verdad! Si no hay API Key, no hay paraíso (ni chatbot).
     if not API_KEY:
-        print(
-            f"{Colors.RED}Error: No se pudo obtener la API Key por ningún método. Saliendo.{Colors.RESET}"
-        )
+        print(theme_manager.style("error_message", "No se pudo obtener la API Key. Saliendo."))
         sys.exit(1)
 
     try:
-        # Configuramos la API de Gemini con la clave. ¡Crucemos los dedos!
         genai.configure(api_key=API_KEY)
-        print(f"\n{Colors.GREEN}API de Gemini configurada correctamente.{Colors.RESET}")
-        time.sleep(0.5) # Una pausita para que el mensaje se lea.
+        print(theme_manager.style("info_message", "\nAPI de Gemini configurada correctamente."))
+        time.sleep(0.5)
     except Exception as e:
-        print(
-            f"{Colors.RED}Error al configurar la API con la clave proporcionada: {e}{Colors.RESET}"
-        )
-        print(f"{Colors.RED}Verifica que la clave de API sea correcta.{Colors.RESET}")
-        sys.exit(1)
-
-    # --- Selección de Modelo (Modificado) ---
-    # Ahora, a elegir el cerebro de la operación.
-    print(
-    f"\n{Colors.BOLD}{Colors.BLUE}--- Selección de Modelo de Gemini ---{Colors.RESET}"
-    )
-    all_models_list = []
-    available_for_generation = []
-    # Si algún día usamos modelos de embedding u otros, aquí se podrían añadir.
-
-    try:
-        # Le preguntamos a Gemini qué modelos tiene disponibles.
-        all_models_list = list(genai.list_models())
-        for m in all_models_list:
-            if "generateContent" in m.supported_generation_methods: # Solo nos interesan los que saben "hablar".
-                available_for_generation.append(m)
-            # elif 'embedContent' in m.supported_generation_methods: # Descomentar si es necesario
-            #     available_for_embedding.append(m)
-            # else:
-            #     other_models.append(m)
-
-        if not available_for_generation:
-            # Si no hay modelos para generar contenido, pues... apaga y vámonos.
-            print(
-                f"{Colors.RED}No se encontraron modelos disponibles para generación de contenido.{Colors.RESET}"
-            )
-            sys.exit(1)
-
-        def model_sort_key(model_obj): # Función para ordenar los modelos de forma "inteligente".
-            name = model_obj.name  # El nombre es algo como 'models/gemini-1.5-pro-latest'
-            # Extraer el nombre real del modelo para la ordenación
-            actual_name_part = name.split("/")[-1]
-
-            latest_score = 1 if "latest" in actual_name_part.lower() else 0
-            pro_score = 1 if "pro" in actual_name_part.lower() else 0
-            flash_score = 1 if "flash" in actual_name_part.lower() else 0
-            # Para versiones como gemini-1.0-pro, gemini-1.5-pro.
-            # Buscamos patrones de versión para ordenarlos numéricamente.
-            version_match = re.search(r"(\d+)(?:[.\-_](\d+))?", actual_name_part)
-            v_major, v_minor = 0, 0
-            if version_match:
-                v_major = int(version_match.group(1))
-                if version_match.group(2):
-                    v_minor = int(version_match.group(2))
-
-            # Criterios de ordenación: los "latest" y "pro" primero, luego por versión, etc.
-            return (
-                -latest_score,  # Puntuaciones más altas primero (por eso el negativo)
-                -pro_score,
-                -flash_score,
-                -v_major,
-                -v_minor,
-                actual_name_part,  # Orden alfabético como último recurso
-            )
-
-        available_for_generation.sort(key=model_sort_key) # ¡A ordenar se ha dicho!
-
-        # Cargamos las preferencias para ver si ya usó un modelo antes.
-        preferences = load_preferences()
-        last_used_model_name = preferences.get("last_used_model")
-        DEFAULT_MODEL_NAME = None
-
-        if last_used_model_name: # Si hay un modelo guardado...
-            # Verificar si el último modelo usado sigue disponible
-            for m_obj in available_for_generation:
-                if m_obj.name == last_used_model_name:
-                    DEFAULT_MODEL_NAME = last_used_model_name
-                    # Moverlo al principio de la lista para que sea la opción 0 (o 1 para el usuario)
-                    # y también el default si el usuario presiona Enter
-                    idx = available_for_generation.index(m_obj)
-                    m_pop = available_for_generation.pop(idx)
-                    available_for_generation.insert(0, m_pop)
-                    print(
-                        f"{Colors.YELLOW}Último modelo usado: {DEFAULT_MODEL_NAME}{Colors.RESET}"
-                    )
-                    break
-            if not DEFAULT_MODEL_NAME: # Si el modelo guardado ya no existe o no es válido.
-                print(
-                    f"{Colors.YELLOW}El último modelo usado ({last_used_model_name}) ya no está disponible o es inválido.{Colors.RESET}"
-                )
-
-        if ( # Si no hay un "último modelo usado" válido, el primero de la lista ordenada será el default.
-            not DEFAULT_MODEL_NAME and available_for_generation
-        ):  # Si no se cargó o no es válido el último usado
-            DEFAULT_MODEL_NAME = available_for_generation[0].name
-
-        print(
-            f"\n{Colors.BOLD}Modelos disponibles para Generación de Contenido:{Colors.RESET}"
-        ) # Mostramos la lista de modelos disponibles.
-        print(f"{Colors.BOLD}Selecciona uno por número para chatear:{Colors.RESET}")
-        for i, m_enum in enumerate(available_for_generation):
-            default_indicator = ""
-            if m_enum.name == DEFAULT_MODEL_NAME and m_enum.name == last_used_model_name:
-                default_indicator = (
-                    f" ({Colors.GREEN}Por defecto - Último usado{Colors.RESET})"
-                )
-            elif m_enum.name == DEFAULT_MODEL_NAME:
-                default_indicator = f" ({Colors.GREEN}Por defecto{Colors.RESET})"
-            elif (
-                m_enum.name == last_used_model_name
-            ):  # Ya no es el default general, pero fue el último usado
-                default_indicator = f" ({Colors.YELLOW}Último usado{Colors.RESET})"
-
-            print(f"{Colors.YELLOW}{i + 1}.{Colors.RESET} {m_enum.name}{default_indicator}")
-
-        if DEFAULT_MODEL_NAME: # Si hay un modelo por defecto, se lo decimos al usuario.
-            print(
-                f"\n({Colors.GREEN}Presiona Enter para usar el modelo por defecto:{Colors.RESET} {DEFAULT_MODEL_NAME})"
-            )
-        else:  # No debería ocurrir si available_for_generation tiene elementos
-            print(f"{Colors.RED}¡Uy! No hay modelo por defecto. Algo raro pasó.{Colors.RESET}")
-
-
-    except Exception as e:
-        print(f"{Colors.RED}Error al listar o procesar modelos: {e}{Colors.RESET}")
-        print(
-            f"{Colors.RED}Asegúrate de que tu clave de API es correcta y tienes conexión a internet.{Colors.RESET}"
-        )
-        sys.exit(1)
-
-    if not available_for_generation:  # Por si las moscas, volvemos a chequear.
-        print(
-            f"{Colors.RED}No se puede seleccionar un modelo para generación ya que no hay disponibles.{Colors.RESET}"
-        )
+        print(theme_manager.style("error_message", f"Error al configurar la API: {e}. Verifica la clave."))
         sys.exit(1)
 
     MODEL_NAME = None
-    while True: # Bucle hasta que el usuario elija un modelo válido.
-        prompt_text = f"{Colors.CYAN}Ingresa el número del modelo para chatear"
-        if DEFAULT_MODEL_NAME:
-            prompt_text += f" o presiona Enter para usar ({DEFAULT_MODEL_NAME})"
-        prompt_text += f": {Colors.RESET}"
-        user_input_model_choice = input(prompt_text).strip()
-
-        if not user_input_model_choice and DEFAULT_MODEL_NAME:
-            # Si presiona Enter y hay default, ¡ese es!
-            MODEL_NAME = DEFAULT_MODEL_NAME
-            print(f"{Colors.GREEN}Usando modelo por defecto:{Colors.RESET} {MODEL_NAME}")
-            break
-        elif user_input_model_choice: # Si ingresó algo...
-            try:
-                selected_index = int(user_input_model_choice) - 1
-                if 0 <= selected_index < len(available_for_generation):
-                    MODEL_NAME = available_for_generation[selected_index].name
-                    print(f"{Colors.GREEN}Modelo seleccionado:{Colors.RESET} {MODEL_NAME}")
-                    break
-                else:
-                    print(
-                        f"{Colors.RED}Número fuera de rango. Por favor, ingrese un número válido.{Colors.RESET}"
-                    )
-            except ValueError:
-                print(
-                    f"{Colors.RED}Entrada inválida. Por favor, ingrese un número o presiona Enter.{Colors.RESET}"
-                ) # Si no ingresó un número...
-        elif (
-            not DEFAULT_MODEL_NAME
-        ):  # Si no hay modelo por defecto y el usuario no ingresó nada
-            print(
-                f"{Colors.RED}No hay modelo por defecto disponible. Por favor, selecciona un número de la lista.{Colors.RESET}"
-            ) # Esto es por si acaso, no debería pasar si hay modelos.
-
-    # Guardamos el modelo elegido en las preferencias para la próxima.
-    if MODEL_NAME:
-        preferences["last_used_model"] = MODEL_NAME
-        save_preferences(preferences)
-
-    time.sleep(0.5) # Otra pausita.
-
-    # --- ¡A CHATEAR! El bucle principal de la conversación ---
-    if MODEL_NAME:
-        print(f"\n{Colors.GREEN}Iniciando chat con el modelo '{MODEL_NAME}'.{Colors.RESET}")
-        print(
-            f"{Colors.YELLOW}Escribe 'salir', 'exit' o 'quit' para terminar.{Colors.RESET}"
-        )
-        # Preparamos el nombre del archivo de historial y vemos si quiere cargar uno anterior.
-        history_filename = get_chat_history_filename(MODEL_NAME)
-        initial_history = []
-        
-        load_hist_choice = (
-            input(
-                f"{Colors.CYAN}¿Deseas cargar el historial anterior para este modelo ({history_filename})? (S/n): {Colors.RESET}"
-            )
-            .strip()
-            .lower()
-        )
-        if load_hist_choice == "" or load_hist_choice == "s":
-            loaded_history = load_chat_history(history_filename)
-            if loaded_history:
-                initial_history = loaded_history
-        else:
-            print(f"{Colors.YELLOW}Empezando una nueva sesión de chat.{Colors.RESET}")
-        
-        try:
-            # Configuramos la seguridad del modelo. No queremos que se porte mal.
-            safety_settings = {
-                HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_ONLY_HIGH,
-                HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_ONLY_HIGH,
-                HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-                HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_ONLY_HIGH,
-            }
-            model = genai.GenerativeModel(MODEL_NAME, safety_settings=safety_settings)
-            chat = model.start_chat(history=initial_history) # ¡Y que comience la charla!
-        
-            while True:
-                print(f"{Colors.BOLD}{Colors.CYAN}Tú: {Colors.RESET}", end="")
-                user_input = ""
-                try:
-                    user_input = input().strip()
-                except KeyboardInterrupt:  # Si el usuario se cansa y presiona Ctrl+C.
-                    print(f"\n{Colors.YELLOW}Saliendo del chat...{Colors.RESET}")
-                    break  # Sale del bucle de chat
-        
-                if user_input.lower() in ["salir", "exit", "quit"]: # Formas educadas de despedirse.
-                    break
-                if not user_input:
-                    continue
-        
-                print(
-                    f"{Colors.BOLD}{Colors.MAGENTA}{MODEL_NAME.split('/')[-1]}: {Colors.RESET}",
-                    end="",
-                )  # Mostramos el nombre corto del modelo para saber quién habla.
-                try:
-                    response = chat.send_message(user_input, stream=True)
-                    full_response_text_parts = []
-                    blocked_by_prompt_feedback = False
-
-                    for chunk in response:
-                        # Vamos juntando los pedacitos de la respuesta.
-                        if hasattr(chunk, "text"):
-                            full_response_text_parts.append(chunk.text)
-
-                        if chunk.prompt_feedback and chunk.prompt_feedback.block_reason:
-                            print(
-                                f"\n{Colors.RED}Tu prompt fue bloqueado: {chunk.prompt_feedback.block_reason_message}{Colors.RESET}"
-                            )
-                            blocked_by_prompt_feedback = True
-                            break # Si el prompt se bloquea, no hay más que decir.
-                    
-                    if not blocked_by_prompt_feedback:
-                        # Si todo fue bien, juntamos la respuesta, la formateamos y la mostramos.
-                        final_text = "".join(full_response_text_parts)
-                        formatted_text = format_gemini_output(final_text)
-                        print(formatted_text, end="", flush=True) # Usar end="" para que el print() de abajo controle el salto de línea final
-
-                    print() # Asegura un salto de línea después de la respuesta completa o mensaje de bloqueo.
-                # Si hay problemas con la API durante el envío/recepción.
-                except Exception as e:
-                    print(
-                        f"\n{Colors.RED}Error al enviar mensaje o recibir respuesta: {e}{Colors.RESET}"
-                    )
-                    continue
-        
-        except Exception as e:
-            # Un error inesperado en el chat. Suele pasar.
-            print(
-                f"{Colors.RED}Ocurrió un error inesperado durante el chat: {e}{Colors.RESET}"
-            )
-            print(f"{Colors.RED}El chat ha terminado.{Colors.RESET}")
+    if profile_model_id:
+        MODEL_NAME = profile_model_id
     else:
-        # Si por alguna razón no se seleccionó modelo (no debería pasar si todo va bien).
-        print(f"{Colors.RED}No se seleccionó ningún modelo. Saliendo.{Colors.RESET}")
+        print(theme_manager.style("section_header", "\n--- Selección de Modelo de Gemini ---"))
+        available_for_generation = []
+        try:
+            all_models_list = list(genai.list_models())
+            for m in all_models_list:
+                if "generateContent" in m.supported_generation_methods:
+                    available_for_generation.append(m)
+            if not available_for_generation:
+                print(theme_manager.style("error_message", "No se encontraron modelos para generación de contenido."))
+                sys.exit(1)
 
-    # Mover la lógica de guardar historial fuera del try/except del bucle de chat,
-    # para que se pregunte incluso si el chat termina abruptamente (Ctrl+C).
-    if MODEL_NAME and 'chat' in locals() and chat.history: # Solo si hubo un chat y tiene historial
-        save_hist_choice = (
-            input(
-                f"{Colors.CYAN}¿Deseas guardar el historial de esta sesión en '{history_filename}'? (S/n): {Colors.RESET}"
-            )
-            .strip()
-            .lower()
-        )
+            def model_sort_key(model_obj):
+                name = model_obj.name
+                actual_name_part = name.split("/")[-1]
+                scores = (-1 if "latest" in actual_name_part else 0,
+                          -1 if "pro" in actual_name_part else 0,
+                          -1 if "flash" in actual_name_part else 0)
+                version_match = re.search(r"(\d+)(?:[.\-_](\d+))?", actual_name_part)
+                v_major, v_minor = (int(version_match.group(1)), int(version_match.group(2) or 0)) if version_match else (0, 0)
+                return (*scores, -v_major, -v_minor, actual_name_part)
+            available_for_generation.sort(key=model_sort_key)
+
+            preferences = load_preferences(theme_manager)
+            last_used_model_name = preferences.get("last_used_model")
+            DEFAULT_MODEL_NAME = None
+            if last_used_model_name:
+                for i, m_obj in enumerate(available_for_generation):
+                    if m_obj.name == last_used_model_name:
+                        DEFAULT_MODEL_NAME = m_obj.name
+                        m_pop = available_for_generation.pop(i)
+                        available_for_generation.insert(0, m_pop)
+                        print(theme_manager.style("info_message", f"Último modelo usado: {DEFAULT_MODEL_NAME}"))
+                        break
+                if not DEFAULT_MODEL_NAME:
+                    print(theme_manager.style("warning_message", f"Último modelo ({last_used_model_name}) no disponible."))
+            if not DEFAULT_MODEL_NAME and available_for_generation:
+                DEFAULT_MODEL_NAME = available_for_generation[0].name
+
+            print(theme_manager.style("info_message", "Selecciona un modelo por número:"))
+            for i, m_enum in enumerate(available_for_generation):
+                indicator = ""
+                if m_enum.name == DEFAULT_MODEL_NAME:
+                    indicator += theme_manager.style("info_message", " (Por defecto)")
+                if m_enum.name == last_used_model_name and m_enum.name != DEFAULT_MODEL_NAME:
+                    indicator += theme_manager.style("warning_message", " (Último usado)")
+                print(f"{theme_manager.style('list_item_bullet', str(i + 1) + '.')} "
+                      f"{theme_manager.style('list_item_text', m_enum.name)}{indicator}")
+
+            if DEFAULT_MODEL_NAME:
+                print(theme_manager.style("info_message", f"\n(Enter para usar por defecto: {DEFAULT_MODEL_NAME})"))
+            else:
+                print(theme_manager.style("error_message", "No hay modelo por defecto."))
+
+            while True:
+                choice_prompt = theme_manager.style("prompt_user", "Elige un modelo" +
+                                                  (f" (Enter para {DEFAULT_MODEL_NAME})" if DEFAULT_MODEL_NAME else "") + ": ")
+                user_input_model_choice = input(choice_prompt).strip()
+                if not user_input_model_choice and DEFAULT_MODEL_NAME:
+                    MODEL_NAME = DEFAULT_MODEL_NAME
+                    break
+                try:
+                    idx = int(user_input_model_choice) - 1
+                    if 0 <= idx < len(available_for_generation):
+                        MODEL_NAME = available_for_generation[idx].name
+                        break
+                    else:
+                        print(theme_manager.style("error_message", "Número fuera de rango."))
+                except ValueError:
+                    print(theme_manager.style("error_message", "Entrada inválida."))
+            print(theme_manager.style("info_message", f"Modelo seleccionado: {MODEL_NAME}"))
+            if MODEL_NAME and not profile_model_id:
+                preferences["last_used_model"] = MODEL_NAME
+                save_preferences(preferences, theme_manager)
+        except Exception as e:
+            print(theme_manager.style("error_message", f"Error al listar/seleccionar modelos: {e}"))
+            sys.exit(1)
+
+    if not MODEL_NAME:
+        print(theme_manager.style("error_message", "No se seleccionó modelo. Saliendo."))
+        sys.exit(1)
+
+    print(theme_manager.style("info_message", f"\nIniciando chat con '{MODEL_NAME}'."))
+    print(theme_manager.style("warning_message", "Escribe 'salir', 'exit' o 'quit' para terminar."))
+    history_filename = get_chat_history_filename(MODEL_NAME)
+    initial_history = []
+    load_hist_choice = input(theme_manager.style("prompt_user",
+                             f"¿Cargar historial para este modelo ({history_filename})? (S/n): ")).strip().lower()
+    if load_hist_choice == "" or load_hist_choice == "s":
+        loaded_history = load_chat_history(history_filename, theme_manager)
+        if loaded_history:
+            initial_history = loaded_history
+    else:
+        print(theme_manager.style("warning_message", "Empezando nueva sesión."))
+
+    if profile_system_prompt and isinstance(profile_system_prompt, str) and profile_system_prompt.strip():
+        max_len = 70
+        ellipsis = "..." if len(profile_system_prompt) > max_len else ""
+        print(theme_manager.style("info_message",
+              f"Usando system prompt del perfil '{profile_name}': '{profile_system_prompt[:max_len]}{ellipsis}'"))
+        system_prompt_content = {'role': 'user', 'parts': [{'text': profile_system_prompt.strip()}]}
+        if not (initial_history and initial_history[0]['role'] == 'user' and
+                initial_history[0]['parts'][0]['text'] == profile_system_prompt.strip()):
+            initial_history.insert(0, system_prompt_content)
+
+    try:
+        safety_settings_to_use = profile_safety_settings or {
+            HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+            HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+            HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+            HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+        }
+        model = genai.GenerativeModel(MODEL_NAME, safety_settings=safety_settings_to_use)
+        chat = model.start_chat(history=initial_history)
+
+        while True:
+            print(theme_manager.style("prompt_user", "Tú: "), end="")
+            try:
+                user_input = input().strip()
+            except KeyboardInterrupt:
+                print(theme_manager.style("warning_message", "\nSaliendo..."))
+                break
+            if user_input.lower() in ["salir", "exit", "quit"]:
+                break
+            if not user_input:
+                continue
+
+            print(theme_manager.style("prompt_model_name", f"{MODEL_NAME.split('/')[-1]}: "), end="")
+            try:
+                response = chat.send_message(user_input, stream=True)
+                full_response_text_parts = []
+                for chunk in response:
+                    if hasattr(chunk, "text"):
+                        full_response_text_parts.append(chunk.text)
+                    if chunk.prompt_feedback and chunk.prompt_feedback.block_reason:
+                        print(theme_manager.style("error_message",
+                              f"\nPrompt bloqueado: {chunk.prompt_feedback.block_reason_message}"))
+                        break
+                else:  # No break from loop
+                    final_text = "".join(full_response_text_parts)
+                    formatted_text = format_gemini_output(final_text, theme_manager)
+                    print(formatted_text, end="", flush=True)
+                print()
+            except Exception as e:
+                print(theme_manager.style("error_message", f"\nError en comunicación con API: {e}"))
+                continue
+    except Exception as e:
+        print(theme_manager.style("error_message", f"Error inesperado en chat: {e}. Chat terminado."))
+
+    if 'chat' in locals() and chat.history:
+        save_hist_choice = input(theme_manager.style("prompt_user",
+                                 f"¿Guardar historial en '{history_filename}'? (S/n): ")).strip().lower()
         if save_hist_choice == "" or save_hist_choice == "s":
-            save_chat_history(chat, history_filename)
+            save_chat_history(chat, history_filename, theme_manager)
 
-    print(f"\n{Colors.BOLD}{Colors.BLUE}--- Script finalizado. ¡Hasta la próxima! ---{Colors.RESET}")
+    print(theme_manager.style("section_header", "\n--- Script finalizado. ¡Hasta la próxima! ---"))
 
 
-# Este es el conjuro para que run_chatbot() se ejecute solo cuando corremos este archivo directamente.
-# Si alguien lo importa como módulo, no queremos que el chatbot se inicie solo.
 if __name__ == "__main__":
     run_chatbot()
 
-##<PyGemAi.py>
-##Copyright (C) <2024> <Julio Cèsar Martìnez> <julioglez@gmail.com>
-##
-##This program is free software: you can redistribute it and/or modify
-##it under the terms of the GNU General Public License as published by
-##the Free Software Foundation, either version 3 of the License, or
-##(at your option) any later version.
-##This program is distributed in the hope that it will be useful,
-##but WITHOUT ANY WARRANTY; without even the implied warranty of
-##MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-##GNU General Public License for more details.
-##You should have received a copy of the GNU General Public License
-##along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# <PyGemAi.py>
+# Copyright (C) <2024> <Julio Cèsar Martìnez> <julioglez@gmail.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
