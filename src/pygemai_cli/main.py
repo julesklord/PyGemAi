@@ -3,11 +3,13 @@ import re
 import sys
 import time
 import getpass
+import threading
+import itertools
+import shutil
 import json
-
-import google.generativeai as genai
-from google.generativeai.types import HarmCategory, HarmBlockThreshold
-
+import google.generativeai as genai # Importa el módulo principal de genai
+from google.generativeai.types import HarmCategory, HarmBlockThreshold # Importa los tipos específicos
+from typing import Optional, List, Dict # Añadido para compatibilidad de tipos
 
 try:
     from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
@@ -34,7 +36,6 @@ class Colors:
     BASE_BLUE = "\033[94m"
     BASE_MAGENTA = "\033[95m"
     BASE_CYAN = "\033[96m"
-    BASE_CYAN = "\033[96m"
     BASE_WHITE = "\033[97m"
 
 
@@ -53,7 +54,8 @@ PREDEFINED_THEMES = {
         "colors": {
             "prompt_user": Colors.BOLD + Colors.BASE_CYAN,
             "prompt_model_name": Colors.BOLD + Colors.BASE_MAGENTA,
-            "response_text": "",
+            "response_text": "", # Color base para la respuesta, usado por format_gemini_output
+            "thinking_message": Colors.BASE_GREEN, # Para la animación de "pensando"
             "error_message": Colors.BASE_RED,
             "warning_message": Colors.BASE_YELLOW,
             "info_message": Colors.BASE_GREEN,
@@ -80,7 +82,8 @@ PREDEFINED_THEMES = {
         "colors": {
             "prompt_user": Colors.BOLD + "\033[38;5;81m",  # Darker Cyan/Blue
             "prompt_model_name": Colors.BOLD + "\033[38;5;208m",  # Orange
-            "response_text": "\033[38;5;229m",  # Light Grey/Almost White
+            "response_text": "\033[38;5;229m",  # Light Grey/Almost White for response_text
+            "thinking_message": "\033[38;5;245m", # Un gris claro para "pensando"
             "error_message": Colors.BOLD + "\033[38;5;196m",  # Bright Red
             "warning_message": "\033[38;5;220m",  # Bright Yellow
             "info_message": "\033[38;5;113m",  # Light Green/Turquoise
@@ -165,7 +168,7 @@ class ThemeManager:
 
 def _parse_safety_settings(profile_settings: dict, theme_manager: ThemeManager) -> dict:
     parsed_settings = {}
-    harm_category_map = {
+    harm_category_map = { # Ahora HarmCategory está disponible globalmente
         "HARM_CATEGORY_HARASSMENT": HarmCategory.HARM_CATEGORY_HARASSMENT,
         "HARM_CATEGORY_HATE_SPEECH": HarmCategory.HARM_CATEGORY_HATE_SPEECH,
         "HARM_CATEGORY_SEXUALLY_EXPLICIT": HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
@@ -243,7 +246,7 @@ def save_encrypted_api_key(api_key: str, password: str, theme_manager: ThemeMana
         print(theme_manager.style("error_message", f"Error al guardar la API Key encriptada: {e}"))
 
 
-def load_decrypted_api_key(password: str, theme_manager: ThemeManager) -> str | None:
+def load_decrypted_api_key(password: str, theme_manager: ThemeManager) -> Optional[str]:
     if not os.path.exists(ENCRYPTED_API_KEY_FILE):
         return None
     try:
@@ -254,9 +257,9 @@ def load_decrypted_api_key(password: str, theme_manager: ThemeManager) -> str | 
         f = Fernet(derived_key)
         return f.decrypt(encrypted_api_key).decode()
     except InvalidToken:
-        return None
-    except Exception as e:
-        print(theme_manager.style("error_message", f"Error al cargar la API Key encriptada: {e}"))
+        return None  # Contraseña incorrecta o token inválido
+    except Exception as e: # Captura otros errores como IOError, problemas de desencriptación, etc.
+        print(theme_manager.style("error_message", f"Error al cargar o desencriptar la API Key: {e}"))
         return None
 
 
@@ -273,7 +276,7 @@ def save_unencrypted_api_key(api_key: str, theme_manager: ThemeManager):
         print(theme_manager.style("error_message", f"Error al guardar la API Key sin encriptar: {e}"))
 
 
-def load_unencrypted_api_key(theme_manager: ThemeManager) -> str | None:
+def load_unencrypted_api_key(theme_manager: ThemeManager) -> Optional[str]:
     if not os.path.exists(UNENCRYPTED_API_KEY_FILE):
         return None
     try:
@@ -333,7 +336,7 @@ def save_chat_history(chat_session, filename: str, theme_manager: ThemeManager):
         print(theme_manager.style("error_message", f"Error al guardar el historial: {e}"))
 
 
-def load_chat_history(filename: str, theme_manager: ThemeManager) -> list | None:
+def load_chat_history(filename: str, theme_manager: ThemeManager) -> Optional[List]:
     if not os.path.exists(filename):
         return None
     try:
@@ -352,7 +355,7 @@ def load_chat_history(filename: str, theme_manager: ThemeManager) -> list | None
 # --- Funciones de UI para Perfiles y Temas ---
 
 def display_profiles(profiles: list, theme_manager: ThemeManager, show_details: bool = False,  # noqa: E501
-                     current_profile_name: str | None = None):
+                     current_profile_name: Optional[str] = None):
     """Muestra una lista numerada de perfiles."""
     if not profiles:
         print(theme_manager.style("warning_message", "No hay perfiles para mostrar."))
@@ -388,7 +391,7 @@ def display_profiles(profiles: list, theme_manager: ThemeManager, show_details: 
             # Safety settings could be summarized here too if needed
 
 
-def _get_predefined_safety_settings(level_name: str) -> dict | None:
+def _get_predefined_safety_settings(level_name: str) -> Optional[Dict]:
     """Devuelve un diccionario de configuraciones de seguridad predefinidas."""
     # Estos son ejemplos, ajustar según necesidad
     levels = {
@@ -417,7 +420,7 @@ def _get_predefined_safety_settings(level_name: str) -> dict | None:
 # --- Fin Funciones UI para Perfiles y Temas ---
 
 
-def create_profile_ui(theme_manager: ThemeManager) -> dict | None:
+def create_profile_ui(theme_manager: ThemeManager) -> Optional[Dict]:
     """UI para crear un nuevo perfil de chat."""
     print(theme_manager.style("section_header", "\n--- Crear Nuevo Perfil ---"))
 
@@ -660,19 +663,76 @@ def format_gemini_output(text: str, theme_manager: ThemeManager) -> str:
     return final_content  # Already colored or empty
 
 
+# --- Animación de "Pensando" ---
+THINKING_MESSAGES = [
+    "Pensando...", "Thinking...", "Réflexion...", "Nachdenken...", "Meditando...",
+    "Elaborando...", "考え中...", "思考中...", "Processando...", "Un momento...",
+]
+SPINNER_CHARS = itertools.cycle(['-', '\\', '|', '/'])
+stop_animation_event = threading.Event()
+
+
+def animate_thinking(theme_manager: ThemeManager, model_prompt_text: str):
+    """
+    Muestra una animación de 'pensando' en la consola.
+    `model_prompt_text` debe ser el texto del prompt del modelo ya estilizado y SIN Colors.RESET al final.
+    """
+    message_cycler = itertools.cycle(THINKING_MESSAGES)
+    current_message = next(message_cycler)
+    message_display_counter = 0
+    # Cambiar mensaje cada ~2 segundos (20 * 0.1s)
+    MESSAGE_CHANGE_INTERVAL_TICKS = 20
+
+    thinking_style_key = "thinking_message"
+    if thinking_style_key not in theme_manager.active_theme_colors:
+        thinking_style_key = "info_message" # Fallback
+
+    terminal_width = shutil.get_terminal_size((80, 24)).columns
+
+    while not stop_animation_event.is_set():
+        if message_display_counter >= MESSAGE_CHANGE_INTERVAL_TICKS:
+            current_message = next(message_cycler)
+            message_display_counter = 0
+
+        spinner_char = next(SPINNER_CHARS)
+        thinking_msg_styled = theme_manager.style(thinking_style_key, f" {current_message} {spinner_char}", apply_reset=False)
+        full_line = f"\r{model_prompt_text}{thinking_msg_styled}{Colors.RESET} "
+        
+        sys.stdout.write(full_line.ljust(terminal_width)[:terminal_width] + '\r') # Escribir y limpiar el resto de la línea
+        sys.stdout.flush()
+        message_display_counter += 1
+        time.sleep(0.1)
+
+    sys.stdout.write('\r' + ' ' * terminal_width + '\r') # Limpiar la línea completa al salir
+    sys.stdout.flush()
+
 # --- ¡Aquí empieza la fiesta! La función principal del chatbot ---
 def display_welcome_message(theme_manager: ThemeManager):
+    # Intenta importar __version__ de forma que funcione tanto si es un módulo del paquete
+    # como si se ejecuta como script (después de ajustar sys.path).
+    try:
+        from pygemai_cli import __version__
+    except ImportError:
+        # Fallback si, por alguna razón, la importación absoluta falla
+        # (esto no debería ocurrir si sys.path se ajusta correctamente al ejecutar como script)
+        print(theme_manager.style("warning_message", "Advertencia: No se pudo determinar la versión del paquete."))
+        __version__ = "desconocida"
+
+
     art_lines = f"""
-PPPPPPP   YY    YY   GGGGGG   EEEEEEE  MMMMM    MMMMM      AAAAA      IIIIIIII
-PP    PP   YY  YY   GG        EE       MM MMM  MMM MM     AA   AA        II
-PP    PP    YYYY    GG   GGG  EEEEEEE  MM  MMMMMM  MM    AAAAAAAAA       II
-PPPPPPP      YY     GG    GG  EE       MM   MMMM   MM   AA       AA      II
-PP           YY      GGGGGG   EEEEEEE  MM    MM    MM  AA         AA  IIIIIIII
-PP_____________________________________________________________________________
+
+PPPPPPP  YY    YY   GGGGGG   EEEEE   MMMMM      MMMMM     AAAAA      II 
+PP    PP  YY  YY   GG        EE       MM MMM  MMM MM     AA   AA     
+PP    PP   YYYY    GG   GGG  EEEEEEE  MM  MMMMMM  MM    AAAA AAAA    II
+PPPPPPP     YY     GG    GG  EE       MM   MMMM   MM   AA  AAA  AA   II
+PP          YY   ___GG__GG____EEEEE____M____MM____M__ A_A_______A_A__II____
+PP          YY      ___________________________________________________________ 
+__________________________________________________________________________________
+Ahora con esteroides!  ______________________________________________________________
 """
     pygemai_art = theme_manager.style("welcome_message_art", art_lines.strip())
-    welcome_text_raw = "¡Bienvenido a PyGemAi v1.2.0!"
-    developer_text_raw = "Un desarrollo de: Julio César Martínez"
+    welcome_text_raw = f"¡Bienvenido a PyGemAi v{__version__}!"
+    developer_text_raw = "Un desarrollo de: julesklord(julioglez.93@gmail.com)"
 
     # Centering text after styling can be tricky due to invisible ANSI codes.
     # A simple approach is to center the raw text and then style it.
@@ -685,10 +745,10 @@ PP_____________________________________________________________________________
 
     print(theme_manager.style("welcome_message_changes_title", "\n--- Novedades en esta versión ---"))
     changes_list = [
-        f"¡Ahora las respuestas del chatbot tienen {theme_manager.style('markdown_bold', 'formato')}! "
-        "(negritas, listas, código, etc.)",
-        f"Mensaje de bienvenida más {theme_manager.style('info_message', 'molón')} (¡lo estás viendo!).",
-        "Pequeñas mejoras y correcciones internas (el trabajo sucio que no se ve).",
+        f"✨ Gestión avanzada de {theme_manager.style('info_message', 'perfiles de chat')} y {theme_manager.style('info_message', 'temas de color')} personalizables.",
+        f"🎨 ¡Formato {theme_manager.style('markdown_bold', 'Markdown')} mejorado en las respuestas del chat!",
+        f"⏳ Animación de 'pensando' {theme_manager.style('info_message', 'mejorada')} para una mejor experiencia.",
+        f"🔑 Flujo de guardado de API Key {theme_manager.style('info_message', 'optimizado')}."
     ]
     for change in changes_list:
         bullet = theme_manager.style("welcome_message_changes_item_bullet", "* ")
@@ -969,24 +1029,93 @@ def run_chatbot():
             if not user_input:
                 continue
 
-            print(theme_manager.style("prompt_model_name", f"{MODEL_NAME.split('/')[-1]}: "), end="")
+            model_name_for_prompt = MODEL_NAME.split('/')[-1]
+            styled_model_name_prompt = theme_manager.style("prompt_model_name", f"{model_name_for_prompt}:", apply_reset=False)
+
+            stop_animation_event.clear()
+            animation_thread = threading.Thread(
+                target=animate_thinking,
+                args=(theme_manager, styled_model_name_prompt)
+            )
+            animation_thread.daemon = True # Permite salir aunque el hilo esté activo
+            
+            full_response_text_parts = []
+            first_chunk_received = False
+            error_during_stream = False
+
             try:
+                animation_thread.start()
                 response = chat.send_message(user_input, stream=True)
-                full_response_text_parts = []
+
                 for chunk in response:
-                    if hasattr(chunk, "text"):
+                    if not first_chunk_received: # Al recibir el primer dato (texto o feedback)
+                        stop_animation_event.set()
+                        if animation_thread.is_alive():
+                            animation_thread.join(timeout=0.5) # Esperar a que limpie
+                        # Imprimir el prompt del modelo ahora que la animación terminó
+                        sys.stdout.write(f"\r{styled_model_name_prompt}{Colors.RESET} ") # \r para asegurar inicio de línea
+                        sys.stdout.flush()
+                        first_chunk_received = True
+
+                    if hasattr(chunk, "text") and chunk.text: # Asegurarse que hay texto
+                        sys.stdout.write(chunk.text) # Salida progresiva del texto
+                        sys.stdout.flush()
                         full_response_text_parts.append(chunk.text)
+
                     if chunk.prompt_feedback and chunk.prompt_feedback.block_reason:
-                        print(theme_manager.style("error_message",
-                              f"\nPrompt bloqueado: {chunk.prompt_feedback.block_reason_message}"))
+                        if not stop_animation_event.is_set(): # Asegurar que la animación se detenga
+                            stop_animation_event.set()
+                            if animation_thread.is_alive():
+                                animation_thread.join(timeout=0.5)
+                        if not first_chunk_received: # Si el error es lo primero que llega
+                             sys.stdout.write(f"\r{styled_model_name_prompt}{Colors.RESET} ")
+                             sys.stdout.flush()
+                        
+                        sys.stdout.write("\n") # Nueva línea para el mensaje de error
+                        # print() ya añade newline, \n en f-string es para asegurar que el mensaje de error esté en su propia línea
+                        print(theme_manager.style("error_message", f"Prompt bloqueado: {chunk.prompt_feedback.block_reason_message}"))
+                        full_response_text_parts.clear()
+                        error_during_stream = True
                         break
-                else:  # No break from loop
+                
+                # Después del bucle de chunks
+                if not stop_animation_event.is_set(): # Si el bucle terminó muy rápido o respuesta vacía
+                    stop_animation_event.set()
+                    if animation_thread.is_alive():
+                        animation_thread.join(timeout=0.5)
+                
+                if not first_chunk_received and not error_during_stream:
+                    # Respuesta vacía, sin errores. La animación se detuvo (o se detendrá).
+                    # Imprimir el prompt del modelo.
+                    sys.stdout.write(f"\r{styled_model_name_prompt}{Colors.RESET} ")
+                    sys.stdout.flush()
+
+                # Nueva línea después de la salida progresiva (o el prompt si no hubo salida)
+                # Solo si no hubo un error que ya manejó su propia salida de línea.
+                if not error_during_stream:
+                    sys.stdout.write("\n")
+                    sys.stdout.flush()
+
+                # Ahora, si no hubo error y tenemos texto, lo formateamos y lo imprimimos.
+                if not error_during_stream and full_response_text_parts:
                     final_text = "".join(full_response_text_parts)
-                    formatted_text = format_gemini_output(final_text, theme_manager)
-                    print(formatted_text, end="", flush=True)
-                print()
+                    if final_text.strip(): # Solo si hay contenido real
+                        formatted_text = format_gemini_output(final_text, theme_manager)
+                        sys.stdout.write(formatted_text) # Imprime el texto formateado
+                        sys.stdout.write("\n") # Añade la nueva línea final para el turno de respuesta
+                        sys.stdout.flush()
+                
             except Exception as e:
+                if not stop_animation_event.is_set():
+                    stop_animation_event.set()
+                if animation_thread.is_alive():
+                    animation_thread.join(timeout=0.5)
+                
+                if not first_chunk_received: # Si el error ocurrió antes de imprimir el prompt del modelo
+                    sys.stdout.write(f"\r{styled_model_name_prompt}{Colors.RESET} ")
+                    sys.stdout.flush()
                 print(theme_manager.style("error_message", f"\nError en comunicación con API: {e}"))
+                full_response_text_parts.clear() # No guardar historial si hubo este error
                 continue
     except Exception as e:
         print(theme_manager.style("error_message", f"Error inesperado en chat: {e}. Chat terminado."))
@@ -1001,6 +1130,20 @@ def run_chatbot():
 
 
 if __name__ == "__main__":
+    # Si main.py se ejecuta directamente (ej. python src/pygemai_cli/main.py),
+    # las importaciones relativas o las que dependen de que el paquete esté en sys.path fallarán.
+    # Ajustamos sys.path para que el directorio 'src' (padre de 'pygemai_cli') esté accesible,
+    # permitiendo así importaciones como 'from pygemai_cli import ...'.
+    if __package__ is None: # True cuando se ejecuta como script y no con -m
+        import os
+        import sys
+        # Ruta al directorio 'src/pygemai_cli'
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        # Ruta al directorio 'src'
+        package_root = os.path.dirname(script_dir)
+        if package_root not in sys.path:
+            sys.path.insert(0, package_root)
+
     run_chatbot()
 
 # <PyGemAi.py>
@@ -1016,5 +1159,3 @@ if __name__ == "__main__":
 # GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-
